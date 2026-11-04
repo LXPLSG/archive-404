@@ -1,9 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AdminAuth,ADMIN_HOLD_MS} from '../js/admin-auth.js';
+import {AdminAuth,ADMIN_HOLD_MS,adminRoute} from '../js/admin-auth.js';
 import {createHandler} from '../supabase/functions/archive404-auth/index.js';
 const response=(data,status=200)=>new Response(JSON.stringify(data),{status});
 test('hidden hold is seven seconds',()=>assert.equal(ADMIN_HOLD_MS,7000));
+test('setup URL continues to resolve to setup after a reload; normal admin and menu routes remain intact',()=>{
+  const token='a'.repeat(64),hash='#setup='+token;
+  assert.deepEqual(adminRoute(hash),{view:'admin',setupToken:token});
+  assert.deepEqual(adminRoute(hash),adminRoute(hash));
+  assert.deepEqual(adminRoute('#admin'),{view:'admin',setupToken:''});
+  assert.deepEqual(adminRoute(''),{view:'menu',setupToken:''});
+  assert.equal(adminRoute('#setup=invalid').setupToken,'');
+});
 test('admin session requires a valid login and expires after 15 idle minutes',async()=>{
   let time=1000;const calls=[];
   const auth=new AdminAuth(async(url,options)=>{const action=JSON.parse(options.body).action;calls.push({action,headers:options.headers});return response(action==='login'?{access_token:'test-only',expires_at:4000}:{authorized:true});},()=>time);
@@ -65,4 +73,13 @@ test('session check rejects absent, invalid and non-admin tokens',async()=>{
 });
 test('backend refuses unexpected origins before contacting auth',async()=>{
   const s=server();const r=await s.handler(new Request('https://edge.invalid',{method:'POST',headers:{Origin:'https://untrusted.invalid'},body:'{}'}));assert.equal(r.status,403);assert.equal(s.calls.length,0);
+});
+test('setup readiness checks never create a user or consume the owner capability',async()=>{
+  const s=server();const result=await s.request({action:'setup-check',setupToken:'a'.repeat(64)});assert.deepEqual(await result.json(),{valid:true});
+  assert.deepEqual(s.calls.map(c=>c.path),['/rest/v1/rpc/room404_setup_allowed']);
+  assert.deepEqual(await (await server({'/rest/v1/rpc/room404_setup_allowed':false}).request({action:'setup-check',setupToken:'a'.repeat(64)})).json(),{valid:false});
+});
+test('auth accepts a password-grant response that supplies expires_in without expires_at',async()=>{
+  const before=Math.floor(Date.now()/1000);const s=server({'/auth/v1/token?grant_type=password':{access_token:'test-jwt',expires_in:3600}});
+  const data=await (await s.request({action:'login',username:'owner',password:'test-only-password'})).json();assert.ok(data.expires_at>=before+3600&&data.expires_at<=Math.floor(Date.now()/1000)+3600);
 });
