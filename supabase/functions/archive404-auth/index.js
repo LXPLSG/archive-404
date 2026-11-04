@@ -22,6 +22,13 @@ export function createHandler({base,service,anon,fetcher=fetch}){
       const raw=await req.text();if(raw.length>8192)return reply(413,{error:'Request too large'});
       let input;try{input=JSON.parse(raw);}catch{return reply(400,{error:'Invalid request'});}
       if(!input||typeof input!=='object')return reply(400,{error:'Invalid request'});
+      if(input.action==='setup-check'){
+        const token=String(input.setupToken||'');
+        if(!/^[a-f0-9]{64}$/.test(token))return reply(200,{valid:false});
+        const result=await api('/rest/v1/rpc/room404_setup_allowed',{p_token:token});
+        if(!result.ok)return reply(503,{error:'Account setup is temporarily unavailable. Please retry.'});
+        return reply(200,{valid:result.data===true});
+      }
       if(input.action==='check'||input.action==='logout'){
         const token=(req.headers.get('Authorization')||'').replace(/^Bearer /,'');
         if(!token||!await admin(token))return reply(401,{error:'Please sign in again.'});
@@ -49,7 +56,8 @@ export function createHandler({base,service,anon,fetcher=fetch}){
       const signed=await api('/auth/v1/token?grant_type=password',{email,password},anon);
       if(!signed.ok)return reply(401,{error:'Username or password is incorrect.'});
       if(!await admin(signed.data.access_token))return reply(403,{error:'This account does not have admin access.'});
-      return reply(200,{access_token:signed.data.access_token,expires_at:signed.data.expires_at});
+      const expires_at=signed.data.expires_at??Math.floor(Date.now()/1000)+Number(signed.data.expires_in);
+      return reply(200,{access_token:signed.data.access_token,expires_at});
     }catch{return reply(503,{error:'Sign-in is temporarily unavailable. Please retry online.'});}
   };
 }
