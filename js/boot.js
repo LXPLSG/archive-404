@@ -3,7 +3,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})
     .then(registration=>registration.update()).catch(console.warn);
 }
-import('./app.js?v=archive404-approved-2').catch(error=>{
+import('./app.js?v=archive404-auth-5').catch(error=>{
   console.error('Archive 404 startup failed:',error);
   const app=document.querySelector('#app');
   app.replaceChildren();
