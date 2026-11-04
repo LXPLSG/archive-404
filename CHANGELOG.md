@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Surface texture fix · archive404-textures-9 · 4 November 2026: added visible ivory paper grain to shelf and stock cards and a soft charcoal material texture to the dark shelf card. Preserved the existing palette, mountain artwork, grid, buttons and inventory logic. Extended the original Snowflake background to the document root, with dynamic viewport height and safe-area spacing. Added both SVG textures to offline caching.
+
 Safari focus fix · archive404-focus-8 · 4 November 2026: suppressed the browser outline only on the focusable main content container, preventing blue lines around the menu after returning from admin. Kept focus styling for links, buttons and form controls. No inventory, authentication, layout or texture changes.
 
 Touch access fix · archive404-touch-7 · 4 November 2026:
