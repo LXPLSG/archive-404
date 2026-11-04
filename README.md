@@ -21,7 +21,7 @@ Do not open index.html directly. Module loading and service workers require a we
 ## Use the menu
 
 - The two shelf slots appear above Others in Stock. Tap a coffee name or stock label for its full details.
-- Tap a heart to toggle a favourite. The detail screen contains links to Favourites and Manage inventory.
+- Tap a heart to toggle a favourite. The detail screen contains a link to Favourites. Management is accessed through the hidden title gesture.
 - The very faint two-bean icon at the upper right opens Surprise Me. Every available, non-archived bean has an equal chance, irrespective of shelf assignment or serving count. Drawing never consumes stock.
 - Brew a cup opens a confirmation. Confirming records exactly one serving from the oldest available batch. The action cannot consume an archived or depleted bean.
 - **Last serving:** when the total across all active batches reaches zero through a confirmed brew, the profile automatically moves to archive. Its batches and history remain saved. The confirmation and completion message explain this.
@@ -32,7 +32,7 @@ Existing zero-serving records are not retrospectively archived. A manual stock c
 
 ## Inventory and backups
 
-Open Manage inventory from a coffee's detail screen, or append `#admin` to the app URL. The Inventory management link also becomes visible when reached by keyboard. The address L13 - W105/W106 remains on this secondary screen.
+Press and hold the Archive 404 title for seven seconds, or append `#admin` to the app URL, to open admin sign-in. Bean details no longer include a Manage inventory link. The Inventory management link also becomes visible when reached by keyboard. The address L13 - W105/W106 remains on the secondary Inventory screen.
 
 **Hidden landing-page access:** press and hold the Archive 404 title for seven seconds to open admin sign-in. A regular tap still returns home. Keyboard users can focus the title and press Alt+Enter, or use the Inventory management link. The gesture is a navigation shortcut; username/password authentication is a separate step.
 

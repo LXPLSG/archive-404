@@ -1,5 +1,12 @@
 # Archive 404 · Approved UI release
 
+Touch access fix · archive404-touch-7 · 4 November 2026:
+- Replaced the fragile hold handler with touch-specific handling that suppresses native link previews, tolerates small finger movement and retains the exact seven-second threshold.
+- Added pointer capture for mouse/pen, release/cancellation handling and suppression of the trailing click that could return to the menu.
+- Preserved normal short taps, keyboard access, authentication and inventory records.
+- Removed Manage inventory from bean details as requested.
+- Added eight gesture regression tests; all 47 tests pass.
+
 Setup continuity fix · archive404-auth-6 · 4 November 2026:
 - Kept the private setup fragment until account creation succeeds so a reload does not discard enrollment.
 - Added read-only setup-link verification before enabling Create admin account.
