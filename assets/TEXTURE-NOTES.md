@@ -1,5 +1,9 @@
 # Frost dial texture
 
+## Charcoal reference landscape · landscape-10
+
+charcoal-landscape.png was created with the built-in image-generation tool, using the approved mockup as a visual reference. Prompt: "Standalone portrait background for the right coffee card: smooth neutral charcoal, silky atmospheric mist, fine natural antique-gold mineral seam from upper centre toward upper-right, softly gold-edged mountain ridge rising toward the right, quiet lower area; no typography, UI, border or shadow." It is a reference-guided recreation rather than a pixel extraction. The app applies a 7% white overlay to provide the requested lighter tone. This replaces the procedural charcoal grain and vector mountain layers on that card.
+
 `frost-dial.png` is an original background generated with the built-in image-generation tool. Visual direction references Grand Seiko's Snowflake dial, whose wind-sculpted snow and silver finish are described at https://www.grand-seiko.com/uk-en/collections/sbgx355g . It contains no watch branding or photographed watch elements.
 
 ## Generation prompt
