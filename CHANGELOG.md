@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Hidden entry follow-up · archive404-hidden-13: removed Manage inventory from Favourites and removed the header's public management shortcut. The seven-second wordmark hold now launches management only while on the landing menu. Existing admin authentication, authenticated routes and keyboard equivalent remain intact. No stored records changed.
+
 Compact details · archive404-details-12: removed favourite controls from coffee cards and management rows; kept the toggle beside Brew in the coffee detail view. Reserved the header corner for Close. Reduced label spacing and typography on phone detail dialogs, with an additional short-screen layout. Full content remains available, with scrolling retained for unusually long records or enlarged text. No inventory calculation, storage or authentication changes.
 
 Monogram and address · archive404-monogram-11: added the small centred address L13 - W105/W106 beneath the wordmark. Replaced the cup icon with the selected ivory 404 monogram on textured graphite. Added 180px Apple touch, 192px PWA and 512px maskable PNG icons, updated manifest and offline cache. Inventory, authentication and seven-second title hold remain unchanged.

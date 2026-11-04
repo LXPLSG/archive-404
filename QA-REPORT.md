@@ -1,5 +1,9 @@
 # Archive 404 QA report
 
+Hidden-entry verification: 11 hold-handler/service-worker checks passed. Browser tests confirmed that a 7.25-second hold on Favourites does not launch admin, while the same hold on the landing menu opens Admin sign in and remains there after release. Favourites and the header contain no management link. No stock or credentials changed.
+
+Hidden entry follow-up · archive404-hidden-13: removed public admin anchors from Favourites and the header. Landing-menu-only hold callback preserves the existing seven-second handler and authentication. Direct admin routes continue to require sign-in; hiding navigation is not an additional security boundary.
+
 Compact details · archive404-details-12: all 47 automated regression checks passed. Kenya Kirinyaga's complete fields, dates, stock summary, brewing notes, Brew, favourite and favourites link fit without internal scrolling at 390 × 700 and 320 × 640. Close and favourite occupy separate header/footer areas. Verified zero shelf-card heart controls. Favourite toggled on/off successfully and returned to its original state. Brew opened the existing confirmation; cancelled without stock deduction. Long records and enlarged accessibility text retain scrolling rather than clipping content. Physical iPhone verification remains a device check.
 
 Monogram release validation: 11 relevant service-worker and hidden-access tests passed. All 22 offline assets exist; PNG signatures and dimensions verified. Phone (390px) and tablet (768px) checks found no overflow; address sits 12px below the wordmark. The normal title link and hidden hold target remain the existing anchor.
