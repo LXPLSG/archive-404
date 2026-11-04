@@ -83,6 +83,22 @@ function exportBackup(){const blob=new Blob([JSON.stringify({...state,exportedAt
 
 document.addEventListener('click',e=>{const v=e.target.closest('[data-view]')?.dataset.view,g=e.target.closest('[data-go]')?.dataset.go,p=e.target.closest('[data-profile]')?.dataset.profile,b=e.target.closest('[data-brew]')?.dataset.brew;const f=e.target.closest('[data-favourite]')?.dataset.favourite;if(v)go(v);if(g)go(g);if(p)openProfile(p);if(b)brew(b);if(f)favourite(f);if(e.target.closest('[data-close-dialog]'))dialog.close();});
 document.querySelector('#open-surprise').onclick=openSurprise;
+// A concealed management entry preserves the approved header composition.
+const wordmark=document.querySelector('.wordmark');
+let holdTimer,holdStart,holdOpened=false;
+const cancelHold=()=>{clearTimeout(holdTimer);holdStart=null;};
+wordmark.addEventListener('pointerdown',e=>{
+  cancelHold();holdOpened=false;
+  if(e.button!==0||!e.isPrimary)return;
+  holdStart={x:e.clientX,y:e.clientY};
+  holdTimer=setTimeout(()=>{holdOpened=true;holdStart=null;go('admin');},900);
+});
+wordmark.addEventListener('pointermove',e=>{if(holdStart&&Math.hypot(e.clientX-holdStart.x,e.clientY-holdStart.y)>10)cancelHold();});
+for(const event of ['pointerup','pointercancel','pointerleave'])wordmark.addEventListener(event,cancelHold);
+wordmark.addEventListener('click',e=>{if(holdOpened){e.preventDefault();holdOpened=false;}});
+wordmark.addEventListener('contextmenu',e=>e.preventDefault());
+wordmark.addEventListener('keydown',e=>{if(e.altKey&&e.key==='Enter'){e.preventDefault();go('admin');}});
+window.addEventListener('blur',cancelHold);
 document.querySelector('#close-surprise').onclick=()=>surpriseDialog.close();
 surpriseDialog.addEventListener('close',()=>{clearTimeout(spinTimer);if(view==='surprise'){view='menu';history.replaceState(null,'','#menu');}});
 document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{try{state=validateBackup(JSON.parse(await e.target.files[0].text()));await save('Backup imported');}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{view=location.hash.slice(1)||'menu';render();});
