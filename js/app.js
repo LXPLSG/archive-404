@@ -35,7 +35,7 @@ async function favourite(id){state=toggleFavourite(state,id);await save(profile(
 
 
 function renderMenu(){app.innerHTML=menuMarkup(state);}
-function renderFavourites(){const items=state.profiles.filter(p=>p.favourite&&!p.archived);app.innerHTML=`<section class="menu-section"><h2>Favourites</h2><div class="stock-list">${items.map((p,i)=>stockCard(state,p,i)).join('')||'<p class="empty-stock">Tap a coffee’s heart to keep it here.</p>'}</div><p class="detail-links"><a href="#menu">Back to the menu</a><a href="#admin">Manage inventory</a></p></section>`;}
+function renderFavourites(){const items=state.profiles.filter(p=>p.favourite&&!p.archived);app.innerHTML=`<section class="menu-section"><h2>Favourites</h2><div class="stock-list">${items.map((p,i)=>stockCard(state,p,i)).join('')||'<p class="empty-stock">Tap a coffee’s heart to keep it here.</p>'}</div><p class="detail-links"><a href="#menu">Back to the menu</a></p></section>`;}
 let draw = [], spinTimer;
 const wheelColors=['#b9bab4','#e2e2dd','#a2a49b','#d2d3cb','#c1c3ba','#eeeee9'];
 const surpriseDialog=document.querySelector('#surprise-dialog');
@@ -135,7 +135,7 @@ function exportBackup(){const blob=new Blob([JSON.stringify({...state,exportedAt
 
 document.addEventListener('click',e=>{const v=e.target.closest('[data-view]')?.dataset.view,g=e.target.closest('[data-go]')?.dataset.go,p=e.target.closest('[data-profile]')?.dataset.profile,b=e.target.closest('[data-brew]')?.dataset.brew;const f=e.target.closest('[data-favourite]')?.dataset.favourite;if(v)go(v);if(g)go(g);if(p)openProfile(p);if(b)brew(b);if(f)favourite(f);if(e.target.closest('[data-close-dialog]'))dialog.close();});
 document.querySelector('#open-surprise').onclick=openSurprise;
-installAdminHold(document.querySelector('.wordmark'),()=>go('admin'),{delay:ADMIN_HOLD_MS});
+installAdminHold(document.querySelector('.wordmark'),()=>{if(view==='menu')go('admin');},{delay:ADMIN_HOLD_MS});
 document.querySelector('#close-surprise').onclick=()=>surpriseDialog.close();
 surpriseDialog.addEventListener('close',()=>{clearTimeout(spinTimer);if(view==='surprise'){view='menu';history.replaceState(null,'','#menu');}});
 document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!await requireAdmin())return;try{state=validateBackup(JSON.parse(await file.text()));await save('Backup imported');}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{const route=adminRoute(location.hash);view=route.view;if(route.setupToken)setupToken=route.setupToken;render();});
