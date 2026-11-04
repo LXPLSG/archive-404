@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Compact details · archive404-details-12: removed favourite controls from coffee cards and management rows; kept the toggle beside Brew in the coffee detail view. Reserved the header corner for Close. Reduced label spacing and typography on phone detail dialogs, with an additional short-screen layout. Full content remains available, with scrolling retained for unusually long records or enlarged text. No inventory calculation, storage or authentication changes.
+
 Monogram and address · archive404-monogram-11: added the small centred address L13 - W105/W106 beneath the wordmark. Replaced the cup icon with the selected ivory 404 monogram on textured graphite. Added 180px Apple touch, 192px PWA and 512px maskable PNG icons, updated manifest and offline cache. Inventory, authentication and seven-second title hold remain unchanged.
 
 Reference landscape follow-up · archive404-landscape-10: replaced the dark card's procedural cloudy grain and angular artwork with a standalone reference-guided charcoal landscape image. Applied a gentle lightening layer as requested. Kept all content, card grids, button colours and stock logic unchanged. The Snowflake background still fills the webpage; Safari's native status and toolbar areas are outside the textured page canvas.

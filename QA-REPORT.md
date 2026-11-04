@@ -1,5 +1,7 @@
 # Archive 404 QA report
 
+Compact details · archive404-details-12: all 47 automated regression checks passed. Kenya Kirinyaga's complete fields, dates, stock summary, brewing notes, Brew, favourite and favourites link fit without internal scrolling at 390 × 700 and 320 × 640. Close and favourite occupy separate header/footer areas. Verified zero shelf-card heart controls. Favourite toggled on/off successfully and returned to its original state. Brew opened the existing confirmation; cancelled without stock deduction. Long records and enlarged accessibility text retain scrolling rather than clipping content. Physical iPhone verification remains a device check.
+
 Monogram release validation: 11 relevant service-worker and hidden-access tests passed. All 22 offline assets exist; PNG signatures and dimensions verified. Phone (390px) and tablet (768px) checks found no overflow; address sits 12px below the wordmark. The normal title link and hidden hold target remain the existing anchor.
 
 Monogram/address · archive404-monogram-11: phone preview confirms centred address under the wordmark. The monogram artwork stays inside the maskable safe circle. PNG assets are provided at 180, 192 and 512 pixels; HTML explicitly links the Apple touch icon and manifest lists both PWA sizes. All icon files are included in offline caching. Actual iPhone Home Screen installation is a physical-device check; existing installed shortcuts may retain their previous icon.
