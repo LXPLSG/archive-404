@@ -1,5 +1,12 @@
 # Archive 404 · Approved UI release
 
+Setup continuity fix · archive404-auth-6 · 4 November 2026:
+- Kept the private setup fragment until account creation succeeds so a reload does not discard enrollment.
+- Added read-only setup-link verification before enabling Create admin account.
+- Captured auth submissions once at document level; disabled native URL submissions and added explicit signing-in/creating-account progress. Failed requests retain the form and a visible error.
+- Corrected username pattern escaping for modern browsers and supported token responses containing expires_in without expires_at.
+- 39 automated checks pass. No inventory or existing credentials were changed.
+
 Admin authentication · archive404-auth-5 · 4 November 2026:
 - Changed title hold from 0.9 seconds to seven seconds; shorter holds do not launch admin.
 - Added username/password sign-in, private one-time owner setup, Sign out, in-memory sessions and 15-minute idle locking. Management actions recheck admin membership online.

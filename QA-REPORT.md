@@ -1,5 +1,7 @@
 # Archive 404 QA report
 
+Setup continuity follow-up · archive404-auth-6: reproduced setup becoming normal sign-in after reload while Supabase still had zero users/admins and an unused setup ticket. Fixed route retention until successful setup, added a non-consuming setup readiness check, prevented native form navigation, and made pending/error states explicit. Added setup-route, read-only readiness and expires_in compatibility tests; 39 automated checks pass. Local browser verification confirmed the real unused owner link is valid, Create admin account becomes enabled, and the setup screen survives a reload. A normal invalid login displayed a progress state then a visible credential error without a page navigation. A real owner's successful enrollment still requires the owner to enter the password themselves.
+
 ## Authentication release · archive404-auth-5 · 4 November 2026
 
 36 automated checks passed. New tests cover the 7000 ms hold threshold, session expiration and idle locking, failed/offline verification, invalid session responses, explicit admin membership, setup capability requirements, credential rejection, origin checks, and sign-out during a pending authorization check. Backend authentication tests use mocks and do not create production accounts.
