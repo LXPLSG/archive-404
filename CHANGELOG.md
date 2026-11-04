@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Monogram and address · archive404-monogram-11: added the small centred address L13 - W105/W106 beneath the wordmark. Replaced the cup icon with the selected ivory 404 monogram on textured graphite. Added 180px Apple touch, 192px PWA and 512px maskable PNG icons, updated manifest and offline cache. Inventory, authentication and seven-second title hold remain unchanged.
+
 Reference landscape follow-up · archive404-landscape-10: replaced the dark card's procedural cloudy grain and angular artwork with a standalone reference-guided charcoal landscape image. Applied a gentle lightening layer as requested. Kept all content, card grids, button colours and stock logic unchanged. The Snowflake background still fills the webpage; Safari's native status and toolbar areas are outside the textured page canvas.
 
 Surface texture fix · archive404-textures-9 · 4 November 2026: added visible ivory paper grain to shelf and stock cards and a soft charcoal material texture to the dark shelf card. Preserved the existing palette, mountain artwork, grid, buttons and inventory logic. Extended the original Snowflake background to the document root, with dynamic viewport height and safe-area spacing. Added both SVG textures to offline caching.

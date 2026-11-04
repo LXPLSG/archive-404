@@ -1,5 +1,9 @@
 # Archive 404 QA report
 
+Monogram release validation: 11 relevant service-worker and hidden-access tests passed. All 22 offline assets exist; PNG signatures and dimensions verified. Phone (390px) and tablet (768px) checks found no overflow; address sits 12px below the wordmark. The normal title link and hidden hold target remain the existing anchor.
+
+Monogram/address · archive404-monogram-11: phone preview confirms centred address under the wordmark. The monogram artwork stays inside the maskable safe circle. PNG assets are provided at 180, 192 and 512 pixels; HTML explicitly links the Apple touch icon and manifest lists both PWA sizes. All icon files are included in offline caching. Actual iPhone Home Screen installation is a physical-device check; existing installed shortcuts may retain their previous icon.
+
 Reference landscape follow-up · archive404-landscape-10: visually checked the lighter charcoal material, organic gold seam and mountain ridge on the 390 × 844 phone preview. The generated asset contains no text or controls; all interface elements remain live HTML. Native Safari status/toolbar regions are not part of the webpage texture and require physical-device verification. No stock or authentication changes were made.
 
 Release verification: all 47 automated regression checks passed. All 19 offline assets exist. Responsive checks at 390 × 844, 768 × 1024 and 1280 × 900 found no horizontal overflow and equal shelf-card heights. Saved inventory remained 8/5/6 servings throughout these visual checks.
