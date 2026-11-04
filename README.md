@@ -34,11 +34,15 @@ Existing zero-serving records are not retrospectively archived. A manual stock c
 
 Open Manage inventory from a coffee's detail screen, or append `#admin` to the app URL. The Inventory management link also becomes visible when reached by keyboard. The address L13 - W105/W106 remains on this secondary screen.
 
-**Hidden landing-page access:** press and hold the Archive 404 title for about one second to open Inventory. A regular tap still returns home. Keyboard users can focus the title and press Alt+Enter, or use the Inventory management link. This gesture is a navigation shortcut, not authentication.
+**Hidden landing-page access:** press and hold the Archive 404 title for seven seconds to open admin sign-in. A regular tap still returns home. Keyboard users can focus the title and press Alt+Enter, or use the Inventory management link. The gesture is a navigation shortcut; username/password authentication is a separate step.
+
+**Admin account:** the owner receives a single-use setup link, valid for 24 hours, to choose a username and password (at least 12 characters). The link is not included in source code or backups. Usernames are 3–32 characters, starting with a letter; letters, numbers, dots, hyphens and underscores are supported. No email address is needed in the app. After setup, reopen admin and sign in with that username/password. There is no public registration or self-assignment of admin permissions.
+
+Authentication uses the deployed Supabase archive404-auth service, which validates the user and an explicit admin membership. Sessions stay in page memory, lock after 15 idle minutes or token expiry, and are lost on reload. Inventory access and management actions require an online verification. Use Sign out to lock the management screen. Passwords and session tokens are never written to inventory backups or local storage. Username-only accounts do not have email password recovery; contact the project owner for a controlled reset if the password is lost.
 
 Create and edit reusable bean profiles, set initial servings, add replenishment batches, correct remaining counts, review history, and archive/restore profiles. At most two non-archived profiles may be assigned to the shelf. Legacy excess assignments are retained and flagged for correction; they are never silently overwritten or reassigned.
 
-Price per 100 g and currency appear only in Inventory. They are omitted from the public menu, detail view and wheel. **This local version has no sign-in security:** local storage and full backups contain the price information. Hiding a field from the menu is not server-side privacy.
+Price per 100 g and currency appear only in signed-in Inventory. They are omitted from the public menu, detail view and wheel. **Inventory storage remains local:** price information is still in this browser's storage and full backups, accessible to someone with control of that browser. This sign-in gate does not convert existing local data into an encrypted or authenticated cloud database.
 
 Export backup downloads all profiles, batches and history as JSON, including favourites, prices and automatic archive metadata. Import replaces the current collection; export first if you need to retain it. The original `coffee-menu-pwa:v1` storage key and schema version remain unchanged. No data migration or reset is needed.
 
@@ -56,7 +60,7 @@ Export a backup, replace the app files **on the same origin and path**, then ope
 
 The active app is a static site. Publish index.html, styles.css, manifest.webmanifest, sw.js, and the js/ and assets/ directories to an HTTPS static host, keeping their relative paths. There is no build command. You may deploy the full project as well, but the tests and backend drafts are not needed by the static site.
 
-**Shared public go-live remains pending:** this release still uses per-browser local storage and unauthenticated inventory controls. It does not activate Supabase sync or admin authentication. Before a shared deployment, finish and validate authentication, server-side inventory permissions, private pricing and the initial data transfer. The supabase/ directory preserves earlier backend work; it is not called by the active application. Never put a privileged key in browser code.
+**Shared inventory sync remains pending:** this release uses per-browser local storage, with Supabase username/password authentication for the management screen. It does not upload or synchronize inventory. Before using a shared stock ledger, connect the repository to the protected database and validate private pricing and the initial data transfer. The active authentication service source is supabase/functions/archive404-auth/index.js; the downloadable package also preserves prior backend migrations and drafts. Never put a privileged key in browser code.
 
 The asynchronous repository interface in js/storage.js remains the integration boundary for a future authenticated backend. A deployment alone does not transfer the collection between browser origins or devices; export/import is the current transfer mechanism.
 

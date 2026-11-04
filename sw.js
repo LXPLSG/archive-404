@@ -1,5 +1,5 @@
-const CACHE='coffee-menu-archive404-admin-entry-4';
-const ASSETS=['./','./index.html','./styles.css?v=archive404-approved-2','./manifest.webmanifest','./assets/icon.svg','./assets/coffee-placeholder.svg','./assets/frost-dial.png','./assets/stone-grain.svg','./assets/mountain-ivory.svg','./assets/mountain-charcoal.svg','./js/boot.js?v=archive404-approved-2','./js/app.js?v=archive404-approved-2','./js/presentation.js?v=archive404-approved-2','./js/domain.js?v=archive404-approved-2','./js/storage.js?v=archive404-approved-2'];
+const CACHE='coffee-menu-archive404-auth-5';
+const ASSETS=['./','./index.html','./styles.css?v=archive404-auth-5','./manifest.webmanifest','./assets/icon.svg','./assets/coffee-placeholder.svg','./assets/frost-dial.png','./assets/stone-grain.svg','./assets/mountain-ivory.svg','./assets/mountain-charcoal.svg','./js/boot.js?v=archive404-auth-5','./js/app.js?v=archive404-auth-5','./js/presentation.js?v=archive404-auth-5','./js/domain.js?v=archive404-auth-5','./js/storage.js?v=archive404-auth-5','./js/admin-auth.js?v=archive404-auth-5'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('coffee-menu-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

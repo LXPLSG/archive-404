@@ -1,5 +1,19 @@
 # Archive 404 QA report
 
+## Authentication release · archive404-auth-5 · 4 November 2026
+
+36 automated checks passed. New tests cover the 7000 ms hold threshold, session expiration and idle locking, failed/offline verification, invalid session responses, explicit admin membership, setup capability requirements, credential rejection, origin checks, and sign-out during a pending authorization check. Backend authentication tests use mocks and do not create production accounts.
+
+Local browser checks: direct #admin shows sign-in without inventory data; a 1.5-second hold stays on the menu; a 7.25-second hold opens sign-in. A deliberately invalid login was rejected by the deployed Supabase service. Existing menu records remained 8/5/6 servings. No inventory changes were made.
+
+Live database setup verification ran in a transaction: service-role setup succeeded for a synthetic verified user; anonymous and authenticated clients could not execute the enrollment function. All test changes were rolled back. Supabase security advisors returned no findings. The deployed Edge Function is ACTIVE.
+
+Owner account creation and a successful real-owner login require the owner to choose the password on the setup page. Those steps cannot be marked passed before the owner completes them. Physical iOS touch testing, shared database inventory sync and email-free password recovery remain limitations. This gate controls the app's management interface; it does not encrypt existing local storage or prevent someone controlling that browser from reading/modifying its local files.
+
+Earlier release results below are historical; the current admin sign-in and seven-second hold supersede the earlier unprotected 0.9-second entry.
+
+Hidden entry follow-up (4 November 2026): local browser tests verified a 1.2-second title press opens Inventory, a normal click returns to the menu, and focused Alt+Enter opens Inventory. All 26 regression tests passed. No inventory mutation was performed. Title selection/callout is suppressed only on the wordmark; no visible navigation was added. Physical iOS long-press behavior remains a device check.
+
 Texture follow-up (4 November 2026): reduced the pale overlay to 45–50% and visually checked the running mobile page. Computed browser styles confirmed the new opacity and the same frost-dial.png asset. Inventory still displayed 8/5/6 servings. Only background styling and the app-file cache identifier changed; no inventory mutations were made. Preview: ../archive-404-stronger-texture.jpg.
 
 Date: 4 November 2026 · Release archive404-approved-2

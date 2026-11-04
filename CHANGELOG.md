@@ -1,5 +1,12 @@
 # Archive 404 · Approved UI release
 
+Admin authentication · archive404-auth-5 · 4 November 2026:
+- Changed title hold from 0.9 seconds to seven seconds; shorter holds do not launch admin.
+- Added username/password sign-in, private one-time owner setup, Sign out, in-memory sessions and 15-minute idle locking. Management actions recheck admin membership online.
+- Deployed archive404-auth with server-only privileged credentials and explicit admin verification. Fixed the earlier setup function's database permissions with a private, service-only function.
+- Preserved all local inventory and public menu/brewing behavior. Shared inventory sync remains separate work.
+- Added authentication and setup tests; all 36 tests pass, including sign-out during a pending authorization check.
+
 Hidden Inventory entry · 4 November 2026: hold the landing-page wordmark for 0.9 seconds, or focus it and use Alt+Enter. Short taps retain home navigation; movement, cancellation or leaving the title cancels the hold. No visible header control added.
 
 Texture update · 4 November 2026: reduced the pale background overlay from approximately 66–71% opacity to 45–50%, revealing more of the same Snowflake texture. Card colours, typography, layout and inventory behavior remain unchanged. Updated the service-worker cache for delivery.
