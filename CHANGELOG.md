@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Safari focus fix · archive404-focus-8 · 4 November 2026: suppressed the browser outline only on the focusable main content container, preventing blue lines around the menu after returning from admin. Kept focus styling for links, buttons and form controls. No inventory, authentication, layout or texture changes.
+
 Touch access fix · archive404-touch-7 · 4 November 2026:
 - Replaced the fragile hold handler with touch-specific handling that suppresses native link previews, tolerates small finger movement and retains the exact seven-second threshold.
 - Added pointer capture for mouse/pen, release/cancellation handling and suppression of the trailing click that could return to the menu.
