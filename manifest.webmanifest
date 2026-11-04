@@ -1,0 +1,13 @@
+{
+  "name": "Archive 404",
+  "short_name": "Archive 404",
+  "description": "Archive 404 · A personal coffee collection",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8fa",
+  "theme_color": "#f7f8fa",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
