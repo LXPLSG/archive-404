@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="768" viewBox="0 0 512 768" preserveAspectRatio="none">
+  <filter id="charcoal" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency=".007 .011" numOctaves="4" seed="26" stitchTiles="stitch" result="mist"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="3" seed="11" stitchTiles="stitch" result="grain"/>
+    <feComposite in="mist" in2="grain" operator="arithmetic" k1="0" k2=".76" k3=".24" k4="0"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncR type="linear" slope="2.2" intercept="-.6"/><feFuncG type="linear" slope="2.2" intercept="-.6"/><feFuncB type="linear" slope="2.2" intercept="-.6"/><feFuncA type="table" tableValues="1 1"/></feComponentTransfer>
+  </filter>
+  <path fill="#808080" filter="url(#charcoal)" d="M0 0h512v768H0z"/>
+</svg>
