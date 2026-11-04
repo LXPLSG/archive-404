@@ -1,5 +1,7 @@
 # Archive 404 QA report
 
+Reference landscape follow-up · archive404-landscape-10: visually checked the lighter charcoal material, organic gold seam and mountain ridge on the 390 × 844 phone preview. The generated asset contains no text or controls; all interface elements remain live HTML. Native Safari status/toolbar regions are not part of the webpage texture and require physical-device verification. No stock or authentication changes were made.
+
 Release verification: all 47 automated regression checks passed. All 19 offline assets exist. Responsive checks at 390 × 844, 768 × 1024 and 1280 × 900 found no horizontal overflow and equal shelf-card heights. Saved inventory remained 8/5/6 servings throughout these visual checks.
 
 Surface texture follow-up · archive404-textures-9: phone preview at 390 × 844 shows visible paper grain on ivory cards, continuous charcoal texture, equal shelf-card heights and no horizontal overflow. The original frost-dial.png now covers the document root; body is transparent with dynamic viewport height and safe-area padding. No storage keys, records, authentication or serving logic changed. Safari's native toolbar is browser-controlled and cannot be guaranteed to display the webpage texture; physical iPhone Safari remains a device check.

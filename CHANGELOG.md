@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Reference landscape follow-up · archive404-landscape-10: replaced the dark card's procedural cloudy grain and angular artwork with a standalone reference-guided charcoal landscape image. Applied a gentle lightening layer as requested. Kept all content, card grids, button colours and stock logic unchanged. The Snowflake background still fills the webpage; Safari's native status and toolbar areas are outside the textured page canvas.
+
 Surface texture fix · archive404-textures-9 · 4 November 2026: added visible ivory paper grain to shelf and stock cards and a soft charcoal material texture to the dark shelf card. Preserved the existing palette, mountain artwork, grid, buttons and inventory logic. Extended the original Snowflake background to the document root, with dynamic viewport height and safe-area spacing. Added both SVG textures to offline caching.
 
 Safari focus fix · archive404-focus-8 · 4 November 2026: suppressed the browser outline only on the focusable main content container, preventing blue lines around the menu after returning from admin. Kept focus styling for links, buttons and form controls. No inventory, authentication, layout or texture changes.
