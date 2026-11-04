@@ -1,6 +1,7 @@
 const ENDPOINT='https://qucyegqtgdnigcmpfrlw.supabase.co/functions/v1/archive404-auth';
 const PUBLIC_KEY='sb_publishable_AoVFnTmsCIcC0_a9zvF7OQ_CKqpCTq0';
 export const ADMIN_HOLD_MS=7000;
+export function adminRoute(hash){const value=String(hash).replace(/^#/,'');const token=value.startsWith('setup=')?value.slice(6):'';return /^[a-f0-9]{64}$/.test(token)?{view:'admin',setupToken:token}:{view:value||'menu',setupToken:''};}
 
 // Tokens live only in this instance, never in backups or browser storage.
 export class AdminAuth {
@@ -20,6 +21,7 @@ export class AdminAuth {
     if(!data.access_token||!Number.isFinite(data.expires_at)||data.expires_at*1000<=this.clock())throw new Error('Sign-in returned an invalid session.');
     this.#session={access_token:data.access_token,expires_at:data.expires_at};this.#lastUsed=this.clock();
   }
+  async validateSetup(token){const result=await this.request({action:'setup-check',setupToken:token});return result.valid===true;}
   async check(){
     if(!this.active()){this.#session=null;return false;}
     const session=this.#session;

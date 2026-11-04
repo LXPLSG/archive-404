@@ -1,7 +1,7 @@
-import { AdminAuth, ADMIN_HOLD_MS } from './admin-auth.js?v=archive404-auth-5';
-import { menuMarkup, profileMarkup, favouriteButton, stockCard } from './presentation.js?v=archive404-auth-5';
-import { createRepository } from './storage.js?v=archive404-auth-5';
-import { uid, now, totalRemaining, availableProfiles, brewOne, adjustBatch, undoEvent, surpriseCandidates, validateBackup, priceFields, toggleFavourite, PRICE_CURRENCIES, assertShelfCapacity } from './domain.js?v=archive404-auth-5';
+import { AdminAuth, ADMIN_HOLD_MS, adminRoute } from './admin-auth.js?v=archive404-auth-6';
+import { menuMarkup, profileMarkup, favouriteButton, stockCard } from './presentation.js?v=archive404-auth-6';
+import { createRepository } from './storage.js?v=archive404-auth-6';
+import { uid, now, totalRemaining, availableProfiles, brewOne, adjustBatch, undoEvent, surpriseCandidates, validateBackup, priceFields, toggleFavourite, PRICE_CURRENCIES, assertShelfCapacity } from './domain.js?v=archive404-auth-6';
 
 const placeholder = 'assets/coffee-placeholder.svg';
 const seed = { schemaVersion:1, profiles:[
@@ -21,7 +21,7 @@ const image = p => esc(p.image || placeholder); const profile = id => state.prof
 let persistedState=structuredClone(state);
 const auth=new AdminAuth();
 let setupToken='';
-if(view.startsWith('setup=')){const token=view.slice(6);if(/^[a-f0-9]{64}$/.test(token))setupToken=token;view='admin';history.replaceState(null,'','#admin');}
+{const route=adminRoute(location.hash);view=route.view;setupToken=route.setupToken;}
 let adminRenderId=0;
 const save = async message => {try{await repo.save(state);persistedState=structuredClone(state);render();if(message)notify(message);return true;}catch(error){state=structuredClone(persistedState);render();notify('Could not save: '+error.message);return false;}};
 let toastTimer;
@@ -44,18 +44,30 @@ function paintDraw(){const n=draw.length, wheel=document.querySelector('#wheel')
 function renderAdminContent(){const rows=state.profiles.map(p=>{const rem=totalRemaining(state,p.id), archived=p.archived;return `<article class="admin-row ${archived?'archived':''}"><img src="${image(p)}" alt=""><div><h3>${esc(p.name)}</h3><div class="meta">${esc(p.origin)} · ${rem} remaining · ${archived?'Archived':rem?'Active':'Finished'}</div><div class="admin-price">${adminPrice(p)}</div></div><div class="row-actions">${favouriteButton(p)}<button class="secondary" data-edit="${p.id}">Edit</button><button class="secondary" data-replenish="${p.id}">Replenish</button><button class="secondary" data-adjust="${p.id}">Adjust</button><button class="${archived?'secondary':'danger'}" data-archive="${p.id}">${archived?'Restore':'Archive'}</button></div></article>`}).join('');const history=state.history.slice(0,30).map(e=>{const p=profile(e.profileId);return `<div class="history-item"><div><b>${e.type==='brew'?'Brewed 1 serving':e.type==='undo'?'Undid change':'Adjusted stock'}</b> · ${esc(p?.name||'Deleted coffee')} ${e.autoArchived?'· automatically archived ':''}${e.undone?'(undone)':''}<br><time>${new Date(e.at).toLocaleString()}</time></div>${e.type!=='undo'&&!e.undone?`<button class="secondary" data-undo="${e.id}">Undo</button>`:''}</div>`}).join('');app.innerHTML=`<header class="admin-head"><div><div class="eyebrow">Archive 404 · L13 - W105/W106</div><h1>Inventory</h1><p>Profiles are reusable. Replenishment creates a new stock batch and preserves history.</p></div><div class="toolbar"><a class="secondary" href="#menu">Back to menu</a><a class="secondary" href="#favourites">Favourites</a><button class="secondary" id="admin-signout">Sign out</button><button class="primary" id="add-profile">Add coffee</button><button class="secondary" id="export">Export backup</button><button class="secondary" id="import">Import backup</button></div></header>${state.profiles.filter(p=>p.onShelf&&!p.archived).length>2?'<p class="inventory-warning">More than two legacy shelf assignments are saved. No records have been moved; adjust the assignments here. Additional available beans remain accessible in the stock list.</p>':''}<div class="admin-list">${rows||'<div class="empty">No coffee profiles yet.</div>'}</div><section class="history"><div class="section-head"><h2>Recent history</h2></div>${history||'<div class="empty">Brew and adjustment events appear here.</div>'}</section>`;bindAdmin();guardAdminControls();document.querySelector('#admin-signout').onclick=async()=>{const pending=auth.logout();render();await pending;};}
 function renderSignIn(message=''){
   const setup=!!setupToken;
-  app.innerHTML=`<section class="admin-login"><div class="eyebrow">Archive 404</div><h1>${setup?'Create your admin account':'Admin sign in'}</h1><p>${setup?'Choose a username and a password of at least 12 characters. This owner setup link can be used once.':'Sign in to manage your coffee collection.'}</p><form id="admin-login-form"><label>Username<input name="username" autocomplete="username" required pattern="[A-Za-z][A-Za-z0-9._-]{2,31}" minlength="3" maxlength="32" autocapitalize="none" spellcheck="false"></label><label>Password<input name="password" type="password" autocomplete="${setup?'new-password':'current-password'}" required minlength="${setup?12:1}" maxlength="128"></label>${setup?'<label>Confirm password<input name="confirmation" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></label>':''}<p id="login-error" role="alert">${esc(message)}</p><button class="primary" type="submit">${setup?'Create admin account':'Sign in'}</button></form><p class="detail-links"><a href="#menu">Back to the menu</a></p></section>`;
-  document.querySelector('#admin-login-form').onsubmit=async e=>{
-    e.preventDefault();const form=e.currentTarget,button=form.querySelector('button'),error=form.querySelector('#login-error');
-    if(button.disabled)return;
-    const username=form.elements.username.value,password=form.elements.password.value;
-    if(setup&&password!==form.elements.confirmation.value){error.textContent='The passwords do not match.';return;}
-    button.disabled=true;error.textContent='';
-    form.elements.password.value='';if(setup)form.elements.confirmation.value='';
-    try{await auth.login(username,password,setupToken);setupToken='';if(view==='admin')render();}
-    catch(err){error.textContent=err.message;button.disabled=false;}
-  };
+  app.innerHTML=`<section class="admin-login"><div class="eyebrow">Archive 404</div><h1>${setup?'Create your admin account':'Admin sign in'}</h1><p>${setup?'Choose a username and a password of at least 12 characters. This owner setup link can be used once.':'Sign in to manage your coffee collection.'}</p><form id="admin-login-form" method="dialog"><label>Username<input name="username" autocomplete="username" required pattern="[A-Za-z][A-Za-z0-9._\\-]{2,31}" minlength="3" maxlength="32" autocapitalize="none" spellcheck="false"></label><label>Password<input name="password" type="password" autocomplete="${setup?'new-password':'current-password'}" required minlength="${setup?12:1}" maxlength="128"></label>${setup?'<label>Confirm password<input name="confirmation" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></label>':''}<p id="login-error" role="alert">${esc(message)}</p><button class="primary" type="submit">${setup?'Create admin account':'Sign in'}</button></form><p class="detail-links"><a href="#menu">Back to the menu</a></p></section>`;
+  const form=document.querySelector('#admin-login-form');
+  if(setup){
+    const button=form.querySelector('button'),status=form.querySelector('#login-error');button.disabled=true;status.textContent='Checking your setup link…';
+    auth.validateSetup(setupToken).then(valid=>{if(!form.isConnected)return;button.disabled=!valid;status.textContent=valid?'':'This setup link has expired or has already been used. Request a new owner setup link.';}).catch(()=>{if(form.isConnected)status.textContent='Could not verify the setup link. Connect to the internet and reload this page.';});
+  }
 }
+// Capture once so a re-render cannot leave a native GET form that reloads the page.
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='admin-login-form')return;
+  e.preventDefault();void submitAdminLogin(e.target);
+},true);
+async function submitAdminLogin(form){
+  const button=form.querySelector('button'),error=form.querySelector('#login-error'),setup=!!setupToken;
+  if(button.disabled||!form.reportValidity())return;
+  const username=form.elements.username.value,password=form.elements.password.value;
+  if(setup&&password!==form.elements.confirmation.value){error.textContent='The passwords do not match.';return;}
+  button.disabled=true;button.textContent=setup?'Creating account…':'Signing in…';error.textContent='';
+  try{
+    await auth.login(username,password,setupToken);form.reset();setupToken='';
+    if(view==='admin'){history.replaceState(null,'','#admin');render();}
+  }catch(err){if(form.isConnected){error.textContent=err.message;button.disabled=false;button.textContent=setup?'Create admin account':'Sign in';}}
+}
+
 async function renderAdmin(){
   const attempt=++adminRenderId;
   if(!auth.active())return renderSignIn();
@@ -140,5 +152,5 @@ wordmark.addEventListener('keydown',e=>{if(e.altKey&&e.key==='Enter'){e.preventD
 window.addEventListener('blur',cancelHold);
 document.querySelector('#close-surprise').onclick=()=>surpriseDialog.close();
 surpriseDialog.addEventListener('close',()=>{clearTimeout(spinTimer);if(view==='surprise'){view='menu';history.replaceState(null,'','#menu');}});
-document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!await requireAdmin())return;try{state=validateBackup(JSON.parse(await file.text()));await save('Backup imported');}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{view=location.hash.slice(1)||'menu';render();});
+document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!await requireAdmin())return;try{state=validateBackup(JSON.parse(await file.text()));await save('Backup imported');}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{const route=adminRoute(location.hash);view=route.view;if(route.setupToken)setupToken=route.setupToken;render();});
 render();
