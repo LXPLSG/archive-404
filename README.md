@@ -34,6 +34,8 @@ Existing zero-serving records are not retrospectively archived. A manual stock c
 
 Open Manage inventory from a coffee's detail screen, or append `#admin` to the app URL. The Inventory management link also becomes visible when reached by keyboard. The address L13 - W105/W106 remains on this secondary screen.
 
+**Hidden landing-page access:** press and hold the Archive 404 title for about one second to open Inventory. A regular tap still returns home. Keyboard users can focus the title and press Alt+Enter, or use the Inventory management link. This gesture is a navigation shortcut, not authentication.
+
 Create and edit reusable bean profiles, set initial servings, add replenishment batches, correct remaining counts, review history, and archive/restore profiles. At most two non-archived profiles may be assigned to the shelf. Legacy excess assignments are retained and flagged for correction; they are never silently overwritten or reassigned.
 
 Price per 100 g and currency appear only in Inventory. They are omitted from the public menu, detail view and wheel. **This local version has no sign-in security:** local storage and full backups contain the price information. Hiding a field from the menu is not server-side privacy.
