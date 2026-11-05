@@ -1,7 +1,7 @@
 import {INVENTORY_URL,PUBLIC_KEY,VISITOR_TOKEN} from './cloud-config.js?v=archive404-shared-14';
 const LEGACY='coffee-menu-pwa:v1',CACHE='archive404:shared-public:v1',FAVOURITES='archive404:favourites:v1';
 export const emptyInventory=()=>({schemaVersion:1,profiles:[],batches:[],history:[]});
-const publicFields=['id','name','roaster','origin','country','region','producer','variety','process','roastLevel','roastMethod','notes','image','brew','onShelf','archived'];
+const publicFields=['id','name','roaster','origin','country','region','producer','variety','process','roastLevel','roastMethod','notes','image','brew','onShelf','archived','recordedBrews'];
 export function stripPrivate(s){const profiles=s.profiles.filter(p=>!p.archived).map(p=>Object.fromEntries(publicFields.filter(k=>k in p).map(k=>[k,p[k]]))),ids=new Set(profiles.map(p=>p.id));return {schemaVersion:1,profiles,batches:s.batches.filter(b=>ids.has(b.profileId)&&!b.archived),history:[]};}
 export class SharedInventoryRepository{
  constructor({storage=globalThis.localStorage,fetcher=(...args)=>fetch(...args),uuid=()=>crypto.randomUUID()}={}){

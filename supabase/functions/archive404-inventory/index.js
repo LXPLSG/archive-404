@@ -12,7 +12,7 @@ export function validateInventory(input){
 export function publicState(s){
  // Explicit allowlist: private prices and future admin-only fields never leak.
  const fields=['id','name','roaster','origin','country','region','producer','variety','process','roastLevel','roastMethod','notes','image','brew','onShelf','archived'];
- const profiles=s.profiles.filter(p=>!p.archived).map(p=>Object.fromEntries(fields.filter(k=>k in p).map(k=>[k,p[k]])));
+ const profiles=s.profiles.filter(p=>!p.archived).map(p=>({...Object.fromEntries(fields.filter(k=>k in p).map(k=>[k,p[k]])),recordedBrews:s.history.filter(e=>e.profileId===p.id&&e.type==='brew'&&!e.undone).length}));
  const ids=new Set(profiles.map(p=>p.id));
  return {schemaVersion:1,profiles,batches:s.batches.filter(b=>ids.has(b.profileId)&&!b.archived).map(b=>Object.fromEntries(['id','profileId','purchaseDate','roastDate','initialServings','remainingServings','archived'].filter(k=>k in b).map(k=>[k,b[k]]))),history:[]};
 }
