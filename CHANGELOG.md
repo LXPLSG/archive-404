@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Higgsfield materials and reveal · archive404-higgs-17 · 5 November 2026: generated coordinated snow-white crystalline, ivory washi and lighter graphite/gold materials with Higgsfield, plus four original vector wheel emblems. Added a reduced-motion-aware animated result reveal. Wheel uses the two shelf coffees and two random stock coffees; centre tapping spins and re-spins. The compact phone layout shows all four finalists before the result replaces the list. Inventory, authentication and import logic are unchanged.
+
 Wheel update · archive404-wheel-15 · 5 November 2026: each draw contains up to two available shelf coffees and two distinct, uniformly sampled stock coffees. Each finalist has equal selection odds. Removed the lower prompt, spin button and explanatory footer; the accessible centre 404 button now starts the wheel. Tapping it after a result samples a fresh stock pair and immediately spins again. Selection never deducts stock. When either group has fewer than two available coffees, the wheel uses the available choices without moving or inventing stock.
 
 Shared inventory · archive404-shared-14 · 5 November 2026:

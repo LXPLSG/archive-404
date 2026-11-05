@@ -1,5 +1,9 @@
 # Archive 404 QA report
 
+Final Higgsfield release checks: all 61 regression checks pass; all 29 offline assets exist. At 390 × 844, all four finalists are visible before spinning, and a tested reveal fitted the dialog without internal scrolling (754px content / 754px visible). The generated JPEG materials total approximately 760 KB. The vector asset was checked for scripts, embedded raster images and external references before its paths were used. Visual testing confirmed the page, ivory and lighter charcoal treatments behind the real shared collection.
+
+Higgsfield visual update · archive404-higgs-17: replaced page and card materials with original generated assets and used generated Mountain/Blossom/Crescent/Snow crystal vector paths on the wheel, legend and result. Tested centre spinning, fresh-pair re-spins, four-symbol mapping and the coffee-reveal animation. Existing reduced-motion CSS disables all reveal transitions/animations. No brew was confirmed; stock remained unchanged. The wheel-only release's 61 regression checks apply; final visual and offline asset checks are recorded with the delivered release.
+
 Wheel update · archive404-wheel-15: all 61 tests pass. Added deterministic checks for 2+2 composition, all equally likely stock pairs, equal winner index slots, distinct choices, unavailable exclusions, short groups and unchanged stock. Browser testing verified the centre button spins, produces a result with a separate Brew action and re-spins with a fresh pair. The two shelf coffees remain in the draw; stock pairs changed between draws. No brews were confirmed during these checks.
 
 ## Shared inventory · archive404-shared-14 · 5 November 2026
