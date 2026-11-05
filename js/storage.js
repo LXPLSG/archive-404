@@ -7,5 +7,4 @@ export class LocalStorageRepository {
   async clear() { this.storage.removeItem(KEY); }
 }
 
-// Future SupabaseRepository can implement the same async load/save contract.
-export const createRepository = () => new LocalStorageRepository();
+export {SharedInventoryRepository,createRepository} from './shared-storage.js?v=archive404-shared-14';

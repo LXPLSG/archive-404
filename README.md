@@ -65,3 +65,19 @@ The active app is a static site. Publish index.html, styles.css, manifest.webman
 The asynchronous repository interface in js/storage.js remains the integration boundary for a future authenticated backend. A deployment alone does not transfer the collection between browser origins or devices; export/import is the current transfer mechanism.
 
 See CHANGELOG.md and QA-REPORT.md for this release's changes, verified checks and limits.
+# Shared inventory release · 5 November 2026
+
+The hosted app now uses Supabase shared inventory through the `archive404-inventory` Edge Function. GitHub Pages serves the app files; it is not the inventory database. Favourites remain private to each browser/device. Menus refresh on opening/focus and approximately every 10 seconds while visible; refresh immediately to force a new read.
+
+Admin access remains a seven-second hold on the landing-page wordmark followed by username/password sign-in. Import backup now offers **Add records** (keep existing profiles, balances and history; skip matching IDs; put new coffees in Others in Stock) and **Replace all records** (explicit confirmation; previous shared collection retained as a private restore point). Both publish changes for everyone. Exports from Inventory contain the full admin collection, including private prices and history; keep those files private.
+
+The owner-provided `coffee-menu-updated-2026-11-04.json` was loaded into shared storage: 15 profiles, 15 batches, 85 remaining servings. The backup has no shelf assignments; none were invented. The data file itself is not part of the source repository or downloadable project.
+
+Original `coffee-menu-pwa:v1` local data is retained without overwriting it. Public offline browsing uses a separate cache with no private prices/history. Brewing, imports and management changes require a connection; failed network requests are not queued as local stock changes. Request IDs make a retried brew idempotent. A guest can undo its own recent brew using a private, unpredictable request capability. Admins can review the full history and undo eligible events.
+
+Deployment details: deploy the two migration files dated 20261105, then the Edge Function (with `verify_jwt = true`) and its adjacent `domain.js`, and finally the static files. Only public publishable/visitor credentials are in browser source; service credentials remain server environment variables. The existing normalized tables remain untouched and empty. The active collection uses the backward-compatible v1 JSON model in `coffee_private.shared_inventory`, with a revision compare-and-swap transaction and private request/restore-point tables. This avoids dropping legacy fields during migration. Raw database RPCs and tables are service-role-only; the gateway validates admin membership and returns a public field allowlist to guests.
+
+Restoring an import restore point is currently an administrator/operator database operation; there is no self-service restore-point browser UI. Guest favourites do not sync across devices. Physical iOS installation and a real-owner sign-in after this release still require device verification; no owner password was entered or changed during implementation.
+
+Earlier local-first notes below describe previous releases and are superseded by this section.
+

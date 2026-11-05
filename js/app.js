@@ -1,37 +1,29 @@
-import { installAdminHold } from './admin-hold.js?v=archive404-details-12';
-import { AdminAuth, ADMIN_HOLD_MS, adminRoute } from './admin-auth.js?v=archive404-details-12';
-import { menuMarkup, profileMarkup, stockCard } from './presentation.js?v=archive404-details-12';
-import { createRepository } from './storage.js?v=archive404-details-12';
-import { uid, now, totalRemaining, availableProfiles, brewOne, adjustBatch, undoEvent, surpriseCandidates, validateBackup, priceFields, toggleFavourite, PRICE_CURRENCIES, assertShelfCapacity } from './domain.js?v=archive404-details-12';
+import { installAdminHold } from './admin-hold.js?v=archive404-shared-14';
+import { AdminAuth, ADMIN_HOLD_MS, adminRoute } from './admin-auth.js?v=archive404-shared-14';
+import { menuMarkup, profileMarkup, stockCard } from './presentation.js?v=archive404-shared-14';
+import { createRepository } from './storage.js?v=archive404-shared-14';
+import { stripPrivate } from './shared-storage.js?v=archive404-shared-14';
+import { uid, now, totalRemaining, availableProfiles, brewOne, adjustBatch, undoEvent, surpriseCandidates, validateBackup, priceFields, toggleFavourite, PRICE_CURRENCIES, assertShelfCapacity } from './domain.js?v=archive404-shared-14';
 
 const placeholder = 'assets/coffee-placeholder.svg';
-const seed = { schemaVersion:1, profiles:[
-  {id:'ethiopia-guji',name:'Ethiopia Guji',origin:'Guji, Ethiopia',producer:'Smallholder farmers',process:'Natural',roastLevel:'Light',roastMethod:'Omni roast',notes:'Blueberry · jasmine · cacao nib',image:placeholder,brew:'V60 · 15g coffee · 250g water · 94°C · 2:45',onShelf:true,archived:false},
-  {id:'colombia-huila',name:'Colombia Huila',origin:'Huila, Colombia',producer:'Finca El Paraíso',process:'Washed',roastLevel:'Medium-light',roastMethod:'Filter roast',notes:'Red apple · panela · almond',image:placeholder,brew:'Aeropress · 16g coffee · 230g water · 92°C · 2:00',onShelf:true,archived:false},
-  {id:'kenya-kirinyaga',name:'Kenya Kirinyaga',origin:'Kirinyaga, Kenya',producer:'Kii Factory',process:'Washed',roastLevel:'Light',roastMethod:'Filter roast',notes:'Blackcurrant · grapefruit · brown sugar',image:placeholder,brew:'Kalita 185 · 15g coffee · 250g water · 95°C · 3:00',onShelf:false,archived:false}
-], batches:[
-  {id:'batch-ethiopia-1',profileId:'ethiopia-guji',purchaseDate:'2026-10-20',roastDate:'2026-10-17',initialServings:12,remainingServings:8,archived:false},
-  {id:'batch-colombia-1',profileId:'colombia-huila',purchaseDate:'2026-10-22',roastDate:'2026-10-19',initialServings:10,remainingServings:5,archived:false},
-  {id:'batch-kenya-1',profileId:'kenya-kirinyaga',purchaseDate:'2026-10-25',roastDate:'2026-10-21',initialServings:8,remainingServings:6,archived:false}
-], history:[] };
-
-const repo = createRepository(); let state = await repo.load() || structuredClone(seed); let view = location.hash.slice(1) || 'menu';
+const repo = createRepository(); let state = await repo.load(); let view = location.hash.slice(1) || 'menu';
 const app = document.querySelector('#app'), dialog = document.querySelector('#dialog'), dialogBody = document.querySelector('#dialog-body'), toast = document.querySelector('#toast');
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const image = p => esc(p.image || placeholder); const profile = id => state.profiles.find(p => p.id === id);
 let persistedState=structuredClone(state);
 const auth=new AdminAuth();
+repo.setAuth(auth);
 let setupToken='';
 {const route=adminRoute(location.hash);view=route.view;setupToken=route.setupToken;}
 let adminRenderId=0;
-const save = async message => {try{await repo.save(state);persistedState=structuredClone(state);render();if(message)notify(message);return true;}catch(error){state=structuredClone(persistedState);render();notify('Could not save: '+error.message);return false;}};
+const save = async message => {try{state=await repo.save(state);persistedState=structuredClone(state);render();if(message)notify(message);return true;}catch(error){try{state=await repo.load({requireOnline:true});persistedState=structuredClone(state);}catch{state=structuredClone(persistedState);}render();notify('Could not save: '+error.message);return false;}};
 let toastTimer;
 const notify = message => { clearTimeout(toastTimer); toast.textContent=message; toast.classList.add('show'); toastTimer=setTimeout(()=>toast.classList.remove('show'),6500); };
 
 
 
 const adminPrice=p=>p.pricePer100g==null?'Price not set':`${p.currency==='$'?'$':esc(p.currency||'$')+' '}${Number(p.pricePer100g).toFixed(2)} / 100 g`;
-async function favourite(id){state=toggleFavourite(state,id);await save(profile(id).favourite?'Added to favourites':'Removed from favourites');if(dialog.open&&dialogBody.querySelector('[data-favourite]')){dialog.close();openProfile(id);}}
+async function favourite(id){state=toggleFavourite(state,id);repo.saveFavourites(state);persistedState=structuredClone(state);render();notify(profile(id).favourite?'Added to favourites':'Removed from favourites');if(dialog.open&&dialogBody.querySelector('[data-favourite]')){dialog.close();openProfile(id);}}
 
 
 function renderMenu(){app.innerHTML=menuMarkup(state);}
@@ -42,7 +34,7 @@ const surpriseDialog=document.querySelector('#surprise-dialog');
 function renderSurprise(){clearTimeout(spinTimer);draw=surpriseCandidates(state);document.querySelector('#surprise-body').innerHTML=`<section class="surprise-page"><header class="surprise-intro"><div class="eyebrow">Leave it to chance</div><h2 id="surprise-title">Your next discovery.</h2><p>Every available coffee. An equal chance for each, wherever you keep it.</p></header><div class="draw-layout"><div class="wheel-stage"><div class="pointer"></div><div class="wheel" id="wheel"></div></div><div class="draw-panel"><div class="eyebrow">${draw.length} coffees in the draw</div><div id="draw-list"></div><div class="result" id="result" aria-live="polite"><p>${draw.length?'A good cup is one spin away.':'Add or replenish a coffee to get started.'}</p></div><button class="primary spin-button" id="spin" ${draw.length?'':'disabled'}>Spin the wheel ↻</button><p class="quiet">Only brewing uses a serving.</p></div></div></section>`;paintDraw();document.querySelector('#spin').onclick=spin;}
 function openSurprise(){renderSurprise();if(!surpriseDialog.open)surpriseDialog.showModal();}
 function paintDraw(){const n=draw.length, wheel=document.querySelector('#wheel');wheel.style.background=n?`conic-gradient(${draw.map((p,i)=>`${wheelColors[i%wheelColors.length]} ${i*100/n}% ${(i+1)*100/n}%`).join(',')})`:'#d8e0eb';wheel.innerHTML=draw.map((p,i)=>`<span class="wheel-label" style="--angle:${(i+.5)*360/n}deg">${i+1}</span>`).join('');document.querySelector('#draw-list').innerHTML=draw.map((p,i)=>`<div class="draw-item"><span class="draw-number" style="background:${wheelColors[i%wheelColors.length]}">${i+1}</span><div><b>${esc(p.name)}</b><small>${p.onShelf?'On the shelf':'Other in stock'} · ${totalRemaining(state,p.id)} servings</small></div><span class="draw-chance">1 in ${n}</span></div>`).join('');}
-function renderAdminContent(){const rows=state.profiles.map(p=>{const rem=totalRemaining(state,p.id), archived=p.archived;return `<article class="admin-row ${archived?'archived':''}"><img src="${image(p)}" alt=""><div><h3>${esc(p.name)}</h3><div class="meta">${esc(p.origin)} · ${rem} remaining · ${archived?'Archived':rem?'Active':'Finished'}</div><div class="admin-price">${adminPrice(p)}</div></div><div class="row-actions"><button class="secondary" data-edit="${p.id}">Edit</button><button class="secondary" data-replenish="${p.id}">Replenish</button><button class="secondary" data-adjust="${p.id}">Adjust</button><button class="${archived?'secondary':'danger'}" data-archive="${p.id}">${archived?'Restore':'Archive'}</button></div></article>`}).join('');const history=state.history.slice(0,30).map(e=>{const p=profile(e.profileId);return `<div class="history-item"><div><b>${e.type==='brew'?'Brewed 1 serving':e.type==='undo'?'Undid change':'Adjusted stock'}</b> · ${esc(p?.name||'Deleted coffee')} ${e.autoArchived?'· automatically archived ':''}${e.undone?'(undone)':''}<br><time>${new Date(e.at).toLocaleString()}</time></div>${e.type!=='undo'&&!e.undone?`<button class="secondary" data-undo="${e.id}">Undo</button>`:''}</div>`}).join('');app.innerHTML=`<header class="admin-head"><div><div class="eyebrow">Archive 404 · L13 - W105/W106</div><h1>Inventory</h1><p>Profiles are reusable. Replenishment creates a new stock batch and preserves history.</p></div><div class="toolbar"><a class="secondary" href="#menu">Back to menu</a><a class="secondary" href="#favourites">Favourites</a><button class="secondary" id="admin-signout">Sign out</button><button class="primary" id="add-profile">Add coffee</button><button class="secondary" id="export">Export backup</button><button class="secondary" id="import">Import backup</button></div></header>${state.profiles.filter(p=>p.onShelf&&!p.archived).length>2?'<p class="inventory-warning">More than two legacy shelf assignments are saved. No records have been moved; adjust the assignments here. Additional available beans remain accessible in the stock list.</p>':''}<div class="admin-list">${rows||'<div class="empty">No coffee profiles yet.</div>'}</div><section class="history"><div class="section-head"><h2>Recent history</h2></div>${history||'<div class="empty">Brew and adjustment events appear here.</div>'}</section>`;bindAdmin();guardAdminControls();document.querySelector('#admin-signout').onclick=async()=>{const pending=auth.logout();render();await pending;};}
+function renderAdminContent(){const rows=state.profiles.map(p=>{const rem=totalRemaining(state,p.id), archived=p.archived;return `<article class="admin-row ${archived?'archived':''}"><img src="${image(p)}" alt=""><div><h3>${esc(p.name)}</h3><div class="meta">${esc(p.origin)} · ${rem} remaining · ${archived?'Archived':rem?'Active':'Finished'}</div><div class="admin-price">${adminPrice(p)}</div></div><div class="row-actions"><button class="secondary" data-edit="${p.id}">Edit</button><button class="secondary" data-replenish="${p.id}">Replenish</button><button class="secondary" data-adjust="${p.id}">Adjust</button><button class="${archived?'secondary':'danger'}" data-archive="${p.id}">${archived?'Restore':'Archive'}</button></div></article>`}).join('');const history=state.history.slice(0,30).map(e=>{const p=profile(e.profileId);return `<div class="history-item"><div><b>${e.type==='brew'?'Brewed 1 serving':e.type==='undo'?'Undid change':'Adjusted stock'}</b> · ${esc(p?.name||'Deleted coffee')} ${e.autoArchived?'· automatically archived ':''}${e.undone?'(undone)':''}<br><time>${new Date(e.at).toLocaleString()}</time></div>${e.type!=='undo'&&!e.undone?`<button class="secondary" data-undo="${e.id}">Undo</button>`:''}</div>`}).join('');app.innerHTML=`<header class="admin-head"><div><div class="eyebrow">Archive 404 · L13 - W105/W106</div><h1>Inventory</h1><p>Profiles are reusable. Replenishment creates a new stock batch and preserves history.</p></div><div class="toolbar"><a class="secondary" href="#menu">Back to menu</a><a class="secondary" href="#favourites">Favourites</a><button class="secondary" id="admin-signout">Sign out</button><button class="primary" id="add-profile">Add coffee</button><button class="secondary" id="export">Export backup</button><button class="secondary" id="import">Import backup</button></div></header>${state.profiles.filter(p=>p.onShelf&&!p.archived).length>2?'<p class="inventory-warning">More than two legacy shelf assignments are saved. No records have been moved; adjust the assignments here. Additional available beans remain accessible in the stock list.</p>':''}<div class="admin-list">${rows||'<div class="empty">No coffee profiles yet.</div>'}</div><section class="history"><div class="section-head"><h2>Recent history</h2></div>${history||'<div class="empty">Brew and adjustment events appear here.</div>'}</section>`;bindAdmin();guardAdminControls();document.querySelector('#admin-signout').onclick=async()=>{const pending=auth.logout();state=repo.withFavourites(stripPrivate(state));persistedState=structuredClone(state);render();await pending;};}
 function renderSignIn(message=''){
   const setup=!!setupToken;
   app.innerHTML=`<section class="admin-login"><div class="eyebrow">Archive 404</div><h1>${setup?'Create your admin account':'Admin sign in'}</h1><p>${setup?'Choose a username and a password of at least 12 characters. This owner setup link can be used once.':'Sign in to manage your coffee collection.'}</p><form id="admin-login-form" method="dialog"><label>Username<input name="username" autocomplete="username" required pattern="[A-Za-z][A-Za-z0-9._\\-]{2,31}" minlength="3" maxlength="32" autocapitalize="none" spellcheck="false"></label><label>Password<input name="password" type="password" autocomplete="${setup?'new-password':'current-password'}" required minlength="${setup?12:1}" maxlength="128"></label>${setup?'<label>Confirm password<input name="confirmation" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></label>':''}<p id="login-error" role="alert">${esc(message)}</p><button class="primary" type="submit">${setup?'Create admin account':'Sign in'}</button></form><p class="detail-links"><a href="#menu">Back to the menu</a></p></section>`;
@@ -76,18 +68,21 @@ async function renderAdmin(){
   const verified=await auth.check();
   if(view!=='admin'||attempt!==adminRenderId)return;
   if(!verified)return renderSignIn('Please sign in again. An online connection is required.');
+  try{state=await repo.load({requireOnline:true});persistedState=structuredClone(state);}catch(error){return renderSignIn(error.message);}
+  if(view!=='admin'||attempt!==adminRenderId)return;
   renderAdminContent();
+  showLocalMigration();
 }
 async function requireAdmin(){
   if(await auth.check())return true;
-  if(dialog.open)dialog.close();view='admin';location.hash='admin';renderSignIn('Please sign in again before changing inventory.');return false;
+  if(dialog.open)dialog.close();state=repo.withFavourites(stripPrivate(state));persistedState=structuredClone(state);view='admin';location.hash='admin';renderSignIn('Please sign in again before changing inventory.');return false;
 }
 function guardAdminControls(){
   for(const button of app.querySelectorAll('#add-profile,#export,#import,[data-edit],[data-replenish],[data-adjust],[data-archive],[data-undo]')){
     const action=button.onclick;button.onclick=async e=>{if(button.disabled)return;button.disabled=true;try{if(await requireAdmin())await action.call(button,e);}finally{button.disabled=false;}};
   }
 }
-setInterval(()=>{if(view==='admin'&&!auth.active()&&document.querySelector('.admin-list')){if(dialog.open)dialog.close();renderSignIn('Your session expired. Please sign in again.');}},15000);
+setInterval(()=>{if(view==='admin'&&!auth.active()&&document.querySelector('.admin-list')){if(dialog.open)dialog.close();state=repo.withFavourites(stripPrivate(state));persistedState=structuredClone(state);renderSignIn('Your session expired. Please sign in again.');}},15000);
 
 function render(){if(view==='admin')renderAdmin();else if(view==='favourites')renderFavourites();else renderMenu();if(view==='surprise')openSurprise();}
 function go(next){view=next;location.hash=next;render();scrollTo({top:0,behavior:'smooth'});}
@@ -108,18 +103,17 @@ function confirmAction(title,message,label='Confirm'){
     actionDialog.showModal();
   });
 }
-async function undoChange(eventId,message='Change undone'){const result=undoEvent(state,eventId);state=result.state;await save(message+(result.restoredToStock?' · returned to Others in Stock because the shelf is full':''));}
+async function undoChange(eventId,message='Change undone'){try{state=await repo.undo(eventId);persistedState=structuredClone(state);render();notify(message);}catch(error){notify(error.message);}}
 async function brew(id){
   if(brewing)return;const p=profile(id);if(!p||p.archived||totalRemaining(state,id)<1)return notify('No servings available');
   brewing=true;
   try{
     const confirmed=await confirmAction('Brew a cup',`Record one brewed serving of ${p.name}? This will deduct 1 serving from your inventory.${totalRemaining(state,id)===1?' This is the last serving, so the bean will move to archive.':''}`,'Confirm brew');
     if(!confirmed)return;
-    const commit=async()=>{const latest=await repo.load()||state;const result=brewOne(latest,id);if(!result.changed)throw new Error('No servings available');await repo.save(result.state);return result.state;};
-    state=navigator.locks?await navigator.locks.request('coffee-menu-stock',commit):await commit();
+    state=await repo.brew(id);
     persistedState=structuredClone(state);
     if(dialog.open)dialog.close();if(surpriseDialog.open)surpriseDialog.close();
-    if(view==='surprise')view='menu';render();notify(`Brew recorded · ${p.name}${profile(id).archived?' · moved to archive':''}`);
+    if(view==='surprise')view='menu';render();notify(`Brew recorded · ${p.name}${!profile(id)||profile(id).archived?' · moved to archive':''}`);
     const undo=document.createElement('button');undo.className='toast-undo';undo.textContent='Undo';
     const eventId=state.history[0].id;undo.onclick=()=>undoChange(eventId,'Serving restored');toast.append(undo);
   }catch(error){notify('Brew not recorded: '+error.message);}finally{brewing=false;}
@@ -138,5 +132,35 @@ document.querySelector('#open-surprise').onclick=openSurprise;
 installAdminHold(document.querySelector('.wordmark'),()=>{if(view==='menu')go('admin');},{delay:ADMIN_HOLD_MS});
 document.querySelector('#close-surprise').onclick=()=>surpriseDialog.close();
 surpriseDialog.addEventListener('close',()=>{clearTimeout(spinTimer);if(view==='surprise'){view='menu';history.replaceState(null,'','#menu');}});
-document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!await requireAdmin())return;try{state=validateBackup(JSON.parse(await file.text()));await save('Backup imported');}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{const route=adminRoute(location.hash);view=route.view;if(route.setupToken)setupToken=route.setupToken;render();});
-render();
+document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!await requireAdmin())return;try{showImportChoice(validateBackup(JSON.parse(await file.text())));}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{const route=adminRoute(location.hash);view=route.view;if(route.setupToken)setupToken=route.setupToken;render();});
+render();if(!repo.online)notify('Offline · browsing saved menu. Stock changes require a connection.');
+
+function showLocalMigration(){
+ const local=repo.localBackup();if(repo.initialized||!local?.profiles?.length)return;
+ const box=document.createElement('section');box.className='inventory-warning';
+ const text=document.createElement('p');text.textContent='Your saved browser collection is preserved. Publish it once so everyone sees the same inventory.';
+ const publish=document.createElement('button');publish.className='primary';publish.textContent='Publish saved local inventory';
+ publish.onclick=async()=>{if(!await requireAdmin()||!await confirmAction('Publish saved collection','Publish the inventory saved on this device to the shared menu? Your local backup will be retained.','Publish inventory'))return;publish.disabled=true;try{state=await repo.importBackup(validateBackup(local),'replace');persistedState=structuredClone(state);render();notify('Local collection published for everyone');}catch(error){notify(error.message);}finally{publish.disabled=false;}};
+ const backup=document.createElement('button');backup.className='secondary';backup.textContent='Export saved local backup';backup.onclick=()=>{const blob=new Blob([JSON.stringify(local,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='archive404-preserved-local-backup.json';link.click();URL.revokeObjectURL(url);};
+ box.append(text,publish,backup);app.prepend(box);
+}
+let syncing=false;
+async function syncMenu(){
+ if(syncing||view==='admin'||dialog.open||surpriseDialog.open||actionDialog.open||document.hidden||brewing)return;
+ syncing=true;try{const latest=await repo.load();if(JSON.stringify(latest)!==JSON.stringify(state)){state=latest;persistedState=structuredClone(state);render();}}finally{syncing=false;}
+}
+setInterval(syncMenu,10000);window.addEventListener('focus',syncMenu);window.addEventListener('online',syncMenu);document.addEventListener('visibilitychange',syncMenu);
+
+function showImportChoice(backup){
+ if(dialog.open)dialog.close();
+ dialogBody.innerHTML='<h2>Import backup</h2><p>'+backup.profiles.length+' coffees · '+backup.batches.length+' stock batches</p><form id="import-choice"><label><span><input type="radio" name="mode" value="add" checked style="width:auto"> Add records</span><small>Keep existing balances and history. Skip matching IDs; add new coffees to Others in Stock.</small></label><label><span><input type="radio" name="mode" value="replace" style="width:auto"> Replace all records</span><small>Replace the entire shared inventory and history with this backup. A private restore point is retained.</small></label><button class="primary" type="submit">Continue</button><p class="meta">This changes the menu for everyone. Personal favourites stay on each visitor’s device.</p></form>';
+ dialog.showModal();document.querySelector('#import-choice').onsubmit=async event=>{
+   event.preventDefault();const form=event.currentTarget,mode=new FormData(form).get('mode'),button=form.querySelector('button');button.disabled=true;
+   try{
+     if(!await requireAdmin())return;
+     if(!await confirmAction(mode==='replace'?'Replace all shared records?':'Add backup records?',mode==='replace'?'The shared menu, stock and history will be replaced with this backup. A restore point of the current collection is retained.':'Existing records and serving balances will remain unchanged. New records will be added; matching IDs will be skipped.',mode==='replace'?'Replace all records':'Add records'))return;
+     state=await repo.importBackup(backup,mode);persistedState=structuredClone(state);dialog.close();render();
+     const summary=repo.lastImportSummary;notify(summary?'Added '+summary.profiles+' coffees and '+summary.batches+' batches · skipped '+summary.skipped+' matching records':'Shared inventory replaced from backup');
+   }catch(error){notify('Import not completed: '+error.message);}finally{button.disabled=false;}
+ };
+}

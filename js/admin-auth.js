@@ -9,6 +9,7 @@ export class AdminAuth {
   #lastUsed=0;
   constructor(fetcher=(url,options)=>globalThis.fetch(url,options),clock=Date.now){this.fetcher=fetcher;this.clock=clock;}
   active(){return !!this.#session&&this.#session.expires_at*1000>this.clock()&&this.clock()-this.#lastUsed<15*60*1000;}
+  get accessToken(){return this.active()?this.#session.access_token:null;}
   async request(body,token){
     const response=await this.fetcher(ENDPOINT,{method:'POST',cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json',apikey:PUBLIC_KEY,...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});
     const data=await response.json().catch(()=>({}));

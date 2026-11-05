@@ -1,5 +1,16 @@
 # Archive 404 QA report
 
+## Shared inventory · archive404-shared-14 · 5 November 2026
+
+59 automated checks pass. New tests cover two-client visibility, concurrent last-serving attempts, duplicate request replay, lost-response retries, stale admin writes, server validation, guest undo ownership, automatic archive/undo, private price redaction, local favourites isolation, legacy backup preservation, offline public browsing, import append/replace and matching-ID skips. Backend and browser domain sources are verified identical.
+
+Live Supabase transaction tests verified compare-and-swap rejection of stale writes, idempotent commit replay, private import restore-point creation and denial of anonymous raw state access; all test changes were rolled back. The production Edge Function keeps the platform JWT check enabled and checks explicit admin membership for management writes. Anonymous read returned 200; anonymous save/import returned 403. No test brews were made against the owner's real stock.
+
+The owner-authorised backup was validated and committed to the initially empty shared collection: 15 profiles, 15 batches, 85 remaining servings, no consumption history and no shelf assignments. Prices remain in private state only. Original browser storage is not reset. Browser integration uses a disposable local harness; admin Add records was confirmed through the UI and the new coffee appeared in a separate-origin visitor session with the original stock retained. Replace semantics are covered by automated tests and database restore-point verification.
+
+Security advisors: three informational RLS-without-policy notices on deliberately service-only private tables (all client privileges revoked), plus the pre-existing leaked-password protection warning. Remediation reference for the existing Auth setting: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection . No authentication setting was weakened. Restore-point recovery is operator-only; offline stock mutation is intentionally unavailable. Real-owner login and physical iPhone testing were not performed by the agent.
+
+
 Hidden-entry verification: 11 hold-handler/service-worker checks passed. Browser tests confirmed that a 7.25-second hold on Favourites does not launch admin, while the same hold on the landing menu opens Admin sign in and remains there after release. Favourites and the header contain no management link. No stock or credentials changed.
 
 Hidden entry follow-up · archive404-hidden-13: removed public admin anchors from Favourites and the header. Landing-menu-only hold callback preserves the existing seven-second handler and authentication. Direct admin routes continue to require sign-in; hiding navigation is not an additional security boundary.

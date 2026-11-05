@@ -1,4 +1,4 @@
-import { availableProfiles, totalRemaining } from './domain.js?v=archive404-details-12';
+import { availableProfiles, totalRemaining } from './domain.js?v=archive404-shared-14';
 
 export const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const beanIcon='<svg viewBox="0 0 28 28" aria-hidden="true"><ellipse cx="14" cy="14" rx="9" ry="11" transform="rotate(36 14 14)"/><path d="M8 22c1-8 10-8 12-17"/></svg>';

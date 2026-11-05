@@ -1,5 +1,13 @@
 # Archive 404 · Approved UI release
 
+Shared inventory · archive404-shared-14 · 5 November 2026:
+- Connected public browsing, admin editing, replenishment, adjustment, archive/restore, imports and brews to one shared Supabase inventory.
+- Kept existing domain rules on both server and browser; added atomic revision checks, server-side final-serving validation, request idempotency and guest undo capabilities.
+- Isolated personal favourites and private prices/history; retained original local backups and public offline browsing.
+- Added Add records and Replace all records import choices, duplicate skipping, explicit confirmation and private pre-import restore points.
+- Loaded the owner-supplied inventory without fabricating shelf assignments.
+- Removed decorative left strokes from stock cards and balanced their horizontal padding.
+
 Hidden entry follow-up · archive404-hidden-13: removed Manage inventory from Favourites and removed the header's public management shortcut. The seven-second wordmark hold now launches management only while on the landing menu. Existing admin authentication, authenticated routes and keyboard equivalent remain intact. No stored records changed.
 
 Compact details · archive404-details-12: removed favourite controls from coffee cards and management rows; kept the toggle beside Brew in the coffee detail view. Reserved the header corner for Close. Reduced label spacing and typography on phone detail dialogs, with an additional short-screen layout. Full content remains available, with scrolling retained for unusually long records or enlarged text. No inventory calculation, storage or authentication changes.

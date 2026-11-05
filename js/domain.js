@@ -99,3 +99,14 @@ export function validateBackup(data) {
   if (!data || data.schemaVersion !== 1 || !Array.isArray(data.profiles) || !Array.isArray(data.batches) || !Array.isArray(data.history)) throw new Error('This is not a valid Coffee Menu v1 backup.');
   return structuredClone(data);
 }
+
+// Add mode never overwrites an existing profile, batch balance, or event.
+export function addBackupRecords(current,incoming){
+ const next=structuredClone(current),profiles=new Set(next.profiles.map(p=>p.id)),batches=new Map(next.batches.map(b=>[b.id,b])),events=new Set(next.history.map(e=>e.id)),addedBatches=new Set();
+ const summary={profiles:0,batches:0,events:0,skipped:0};
+ for(const p of incoming.profiles){if(profiles.has(p.id)){summary.skipped++;continue;}next.profiles.push({...p,onShelf:false});profiles.add(p.id);summary.profiles++;}
+ for(const b of incoming.batches){if(batches.has(b.id)){if(batches.get(b.id).profileId!==b.profileId)throw Error('A batch ID belongs to a different coffee');summary.skipped++;continue;}if(!profiles.has(b.profileId))throw Error('Batch coffee is missing');next.batches.push(structuredClone(b));batches.set(b.id,b);addedBatches.add(b.id);summary.batches++;}
+ for(const e of incoming.history){if(events.has(e.id)||!addedBatches.has(e.batchId)){summary.skipped++;continue;}next.history.push(structuredClone(e));events.add(e.id);summary.events++;}
+ next.history.sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));
+ return {state:next,summary};
+}
