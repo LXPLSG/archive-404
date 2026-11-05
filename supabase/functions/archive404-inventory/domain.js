@@ -85,8 +85,16 @@ export function undoEvent(state, eventId, at = now()) {
   return { state:next, changed:true, restoredToStock };
 }
 
-export function surpriseCandidates(state) {
-  return availableProfiles(state);
+export function surpriseCandidates(state, random = Math.random) {
+  const available=availableProfiles(state);
+  const shelf=available.filter(p=>p.onShelf).slice(0,2);
+  const stock=available.filter(p=>!p.onShelf);
+  // Partial Fisher–Yates: two distinct stock coffees, uniformly sampled.
+  for(let i=0;stock.length>2&&i<2;i++){
+    const j=i+Math.min(stock.length-i-1,Math.floor(random()*(stock.length-i)));
+    [stock[i],stock[j]]=[stock[j],stock[i]];
+  }
+  return [...shelf,...stock.slice(0,2)];
 }
 
 export function pickSurprise(state, random = Math.random) {

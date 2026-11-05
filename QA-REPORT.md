@@ -1,5 +1,7 @@
 # Archive 404 QA report
 
+Wheel update · archive404-wheel-15: all 61 tests pass. Added deterministic checks for 2+2 composition, all equally likely stock pairs, equal winner index slots, distinct choices, unavailable exclusions, short groups and unchanged stock. Browser testing verified the centre button spins, produces a result with a separate Brew action and re-spins with a fresh pair. The two shelf coffees remain in the draw; stock pairs changed between draws. No brews were confirmed during these checks.
+
 ## Shared inventory · archive404-shared-14 · 5 November 2026
 
 59 automated checks pass. New tests cover two-client visibility, concurrent last-serving attempts, duplicate request replay, lost-response retries, stale admin writes, server validation, guest undo ownership, automatic archive/undo, private price redaction, local favourites isolation, legacy backup preservation, offline public browsing, import append/replace and matching-ID skips. Backend and browser domain sources are verified identical.

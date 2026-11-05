@@ -1,5 +1,7 @@
 # Archive 404 · Approved UI release
 
+Wheel update · archive404-wheel-15 · 5 November 2026: each draw contains up to two available shelf coffees and two distinct, uniformly sampled stock coffees. Each finalist has equal selection odds. Removed the lower prompt, spin button and explanatory footer; the accessible centre 404 button now starts the wheel. Tapping it after a result samples a fresh stock pair and immediately spins again. Selection never deducts stock. When either group has fewer than two available coffees, the wheel uses the available choices without moving or inventing stock.
+
 Shared inventory · archive404-shared-14 · 5 November 2026:
 - Connected public browsing, admin editing, replenishment, adjustment, archive/restore, imports and brews to one shared Supabase inventory.
 - Kept existing domain rules on both server and browser; added atomic revision checks, server-side final-serving validation, request idempotency and guest undo capabilities.

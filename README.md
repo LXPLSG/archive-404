@@ -67,6 +67,8 @@ The asynchronous repository interface in js/storage.js remains the integration b
 See CHANGELOG.md and QA-REPORT.md for this release's changes, verified checks and limits.
 # Shared inventory release · 5 November 2026
 
+Wheel update (archive404-wheel-15): open Surprise Me and tap the centre 404 circle to spin. Each draw uses the two available shelf coffees plus two random, distinct coffees from Others in Stock, with equal odds within that draw. Tap the centre again after a result to sample a fresh stock pair and spin again. If either group has fewer than two available coffees, fewer choices are shown. The separate Brew action is still required to consume stock.
+
 The hosted app now uses Supabase shared inventory through the `archive404-inventory` Edge Function. GitHub Pages serves the app files; it is not the inventory database. Favourites remain private to each browser/device. Menus refresh on opening/focus and approximately every 10 seconds while visible; refresh immediately to force a new read.
 
 Admin access remains a seven-second hold on the landing-page wordmark followed by username/password sign-in. Import backup now offers **Add records** (keep existing profiles, balances and history; skip matching IDs; put new coffees in Others in Stock) and **Replace all records** (explicit confirmation; previous shared collection retained as a private restore point). Both publish changes for everyone. Exports from Inventory contain the full admin collection, including private prices and history; keep those files private.
