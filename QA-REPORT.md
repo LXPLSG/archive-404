@@ -1,3 +1,38 @@
+# Release QA · archive404-mystery-20 · 6 November 2026
+
+71 automated checks pass, covering inventory/undo/idempotency, auth, import modes, personal favourites, wheel eligibility, animation timing/cancellation/reduced motion, cache race protection and the complete offline startup import graph.
+
+Browser verification on isolated test inventory:
+- Wheel opens with two shelf and two stock candidates. The closed packet unfolds to reveal the coffee bean; then the wheel closes and the selected coffee detail opens directly. There is no return to the wheel result screen. Selection alone leaves stock unchanged.
+- Confirmed brew from the revealed detail deducts one serving, reaches glass-cup completion, and Undo restores the serving. Cancellation, skip and last-serving archive/undo were also verified in the prior review run.
+- Closing during mystery playback cancels it; reopening shows a clean draw. A fresh direct wheel URL waits for inventory before opening and correctly includes all four test choices.
+- Saved menu appeared in 150 ms against a deliberately delayed six-second local read endpoint in the prior review run. First uncached visitors still need a backend response.
+- Completion fits at 390 × 844 and 320 × 568, as recorded below. No physical iPhone timing/install test or real-owner login was performed.
+
+Performance/cleanup:
+- 24 offline shell entries, 940,067 bytes; all paths exist. Exact module query versions are tested recursively, and the duplicated domain import was eliminated.
+- Both animation atlases load on interaction rather than initial navigation: brew 334,372 bytes; mystery 466,254 bytes. The mystery atlas has 16 distinct transparent frames, rendered with interpolation over 3.6 seconds.
+- Removed 4,532,165 bytes of superseded materials and obsolete wheel-result CSS/logic. Public menu renders from saved state before sync; stale reads and storage quota errors cannot roll back acknowledged mutations.
+- Source and cache keys updated together. No database/account changes, data reset, additional package dependency, or production stock mutation. Prior reports below describe historical review builds.
+
+# Wheel reveal QA · archive404-reveal-19 · 6 November 2026
+
+66 tests pass. Browser verified with two shelf and two stock test coffees: symbol appears before coffee name/actions; SVG strokes use the emblem-ink animation; name delay 0.85 s and action delay 1.45 s. Centre re-spin resets and replays the result. Counts remained 4/3/6/8 without consumption. At 390 × 844, result fits with 714 px content/visible and no horizontal overflow. No new image download, backend change or production data mutation. Reduced motion is covered by the existing global animation override. This is a local review build, not deployed.
+
+# Brew preview and performance cleanup · archive404-brew-18 · 6 November 2026
+
+Status: local review build; not published. No production inventory was modified.
+
+- 66 automated tests pass: stock, last-serving archive, undo, duplicate/lost-request protection, auth, import modes, privacy, wheel selection, animation timeline and offline cache handling.
+- Browser at 390 × 844: confirmed brew changes test stock from 4 to 3 exactly once, plays the transparent sequence, and shows the correct coffee/count. Undo restores 4; Cancel leaves stock unchanged. Skip reaches the same completion. Last-serving completion states archive; Undo restores availability. Completion fits without scrolling at 390 × 844 (554 px content/visible) and 320 × 568 (463 px content/visible); no horizontal overflow.
+- With a deliberately delayed six-second inventory endpoint, cached menu was visible 150 ms after reload locally. This is a repeat-visit measurement, not a first-visit or physical-phone performance guarantee.
+- All 23 offline shell entries exist: 937,879 bytes. Removed 4,532,165 bytes of obsolete backgrounds (about 83% reduction versus the corresponding previous set). Cache-first versioned assets, navigation fallback and missing-module safeguards pass.
+- Selected original sequence retained; only cup regions replaced with generated glass artwork. GIF verification: 97 frames / 5,600 ms, transparency in every frame, zero changes outside cup regions compared with the selected slow preview. Runtime uses a transparent 16-keyframe atlas (334,372 bytes), loaded on demand.
+- Protected cache revision against late reads, avoided repaint after concurrent user activity, and prevented quota failure obscuring a successful server mutation. Corrupt optional cached favourites do not prevent cached menu reads.
+- Removed unused texture pseudo-elements, wheel pseudo-button styles, imports/assets and contradictory old documentation. No schema, account, storage-key or production inventory migration.
+
+Limitations: first uncached visits still need the backend response. Physical iPhone timing/install was not retested. Offline cache behaviour is regression-tested; physical device network loss was not simulated this iteration. Owner credentials were not used for admin login. Reports below are historical.
+
 # Archive 404 QA report
 
 Final Higgsfield release checks: all 61 regression checks pass; all 29 offline assets exist. At 390 × 844, all four finalists are visible before spinning, and a tested reveal fitted the dialog without internal scrolling (754px content / 754px visible). The generated JPEG materials total approximately 760 KB. The vector asset was checked for scripts, embedded raster images and external references before its paths were used. Visual testing confirmed the page, ivory and lighter charcoal treatments behind the real shared collection.

@@ -1,13 +1,16 @@
+import {preloadBeanReveal,playBeanReveal} from './bean-reveal.js?v=archive404-mystery-20';
 import {wheelSymbol} from './wheel-symbols.js?v=archive404-higgs-17';
+import {preloadBrewArt,showBrewCelebration} from './brew-celebration.js?v=archive404-mystery-20';
 import { installAdminHold } from './admin-hold.js?v=archive404-shared-14';
 import { AdminAuth, ADMIN_HOLD_MS, adminRoute } from './admin-auth.js?v=archive404-shared-14';
-import { menuMarkup, profileMarkup, stockCard } from './presentation.js?v=archive404-shared-14';
-import { createRepository } from './storage.js?v=archive404-shared-14';
-import { stripPrivate } from './shared-storage.js?v=archive404-shared-14';
-import { uid, now, totalRemaining, availableProfiles, brewOne, adjustBatch, undoEvent, surpriseCandidates, validateBackup, priceFields, toggleFavourite, PRICE_CURRENCIES, assertShelfCapacity } from './domain.js?v=archive404-higgs-17';
+import { menuMarkup, profileMarkup, stockCard } from './presentation.js?v=archive404-mystery-20';
+import { createRepository,stripPrivate,emptyInventory } from './shared-storage.js?v=archive404-mystery-20';
+import { uid, now, totalRemaining, adjustBatch, surpriseCandidates, validateBackup, priceFields, toggleFavourite, PRICE_CURRENCIES, assertShelfCapacity } from './domain.js?v=archive404-higgs-17';
 
 const placeholder = 'assets/coffee-placeholder.svg';
-const repo = createRepository(); let state = await repo.load(); let view = location.hash.slice(1) || 'menu';
+const repo = createRepository(),cached=repo.cached();
+let state=cached||emptyInventory(),inventoryReady=!!cached,startupError=false;
+let view = location.hash.slice(1) || 'menu';
 const app = document.querySelector('#app'), dialog = document.querySelector('#dialog'), dialogBody = document.querySelector('#dialog-body'), toast = document.querySelector('#toast');
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const image = p => esc(p.image || placeholder); const profile = id => state.profiles.find(p => p.id === id);
@@ -27,13 +30,13 @@ const adminPrice=p=>p.pricePer100g==null?'Price not set':`${p.currency==='$'?'$'
 async function favourite(id){state=toggleFavourite(state,id);repo.saveFavourites(state);persistedState=structuredClone(state);render();notify(profile(id).favourite?'Added to favourites':'Removed from favourites');if(dialog.open&&dialogBody.querySelector('[data-favourite]')){dialog.close();openProfile(id);}}
 
 
-function renderMenu(){app.innerHTML=menuMarkup(state);}
+function renderMenu(){app.innerHTML=inventoryReady?menuMarkup(state):`<section class="menu-loading" role="status"><h2>${startupError?'Menu unavailable offline':'Opening the archive…'}</h2><p>${startupError?'Reconnect to load the shared menu. Your saved records have not been changed.':'Loading the latest coffee collection.'}</p>${startupError?'<button class="secondary" id="retry-menu">Try again</button>':'<div class="menu-loading-cards" aria-hidden="true"><span></span><span></span></div>'}</section>`;const retry=document.querySelector('#retry-menu');if(retry)retry.onclick=syncMenu;}
 function renderFavourites(){const items=state.profiles.filter(p=>p.favourite&&!p.archived);app.innerHTML=`<section class="menu-section"><h2>Favourites</h2><div class="stock-list">${items.map((p,i)=>stockCard(state,p,i)).join('')||'<p class="empty-stock">Tap a coffee’s heart to keep it here.</p>'}</div><p class="detail-links"><a href="#menu">Back to the menu</a></p></section>`;}
-let draw = [], spinTimer;
+let draw = [], spinTimer, revealController;
 const wheelColors=['#b9bab4','#e2e2dd','#a2a49b','#d2d3cb','#c1c3ba','#eeeee9'];
 const surpriseDialog=document.querySelector('#surprise-dialog');
-function renderSurprise(){clearTimeout(spinTimer);draw=surpriseCandidates(state);document.querySelector('#surprise-body').innerHTML=`<section class="surprise-page"><header class="surprise-intro"><div class="eyebrow">Leave it to chance</div><h2 id="surprise-title">Your next discovery.</h2><p>Two shelf coffees and two random stock picks. Equal chances within this draw.</p></header><div class="draw-layout"><div class="wheel-stage"><div class="pointer"></div><div class="wheel" id="wheel"></div><button class="wheel-centre" id="spin" aria-label="Spin the wheel" ${draw.length?'':'disabled'}>404</button></div><div class="draw-panel"><div class="eyebrow">${draw.length} coffees in the draw</div><div id="draw-list"></div><div class="result" id="result" aria-live="polite"></div></div></div></section>`;paintDraw();document.querySelector('#spin').onclick=spin;}
-function openSurprise(){renderSurprise();if(!surpriseDialog.open)surpriseDialog.showModal();}
+function renderSurprise(){clearTimeout(spinTimer);revealController?.abort();draw=surpriseCandidates(state);document.querySelector('#surprise-body').innerHTML=`<section class="surprise-page"><header class="surprise-intro"><div class="eyebrow">Leave it to chance</div><h2 id="surprise-title">Your next discovery.</h2><p>Two shelf coffees and two random stock picks. Equal chances within this draw.</p></header><div class="draw-layout"><div class="wheel-stage"><div class="pointer"></div><div class="wheel" id="wheel"></div><button class="wheel-centre" id="spin" aria-label="Spin the wheel" ${draw.length?'':'disabled'}>404</button></div><div class="draw-panel"><div class="eyebrow">${draw.length} coffees in the draw</div><div id="draw-list"></div><div class="result" id="result" aria-live="polite"></div></div></div></section>`;paintDraw();document.querySelector('#spin').onclick=spin;}
+function openSurprise(){if(!inventoryReady)return notify('The collection is still loading. Please try again shortly.');renderSurprise();if(draw.length&&!matchMedia('(prefers-reduced-motion: reduce)').matches)preloadBeanReveal();if(!surpriseDialog.open)surpriseDialog.showModal();}
 function paintDraw(){const n=draw.length, wheel=document.querySelector('#wheel');wheel.style.background=n?`conic-gradient(${draw.map((p,i)=>`${wheelColors[i%wheelColors.length]} ${i*100/n}% ${(i+1)*100/n}%`).join(',')})`:'#d8e0eb';wheel.innerHTML=draw.map((p,i)=>`<span class="wheel-label" style="--angle:${(i+.5)*360/n}deg">${wheelSymbol(i)}</span>`).join('');document.querySelector('#draw-list').innerHTML=draw.map((p,i)=>`<div class="draw-item"><span class="draw-number" style="background:${wheelColors[i%wheelColors.length]}">${wheelSymbol(i)}</span><div><b>${esc(p.name)}</b><small>${p.onShelf?'On the shelf':'Other in stock'} · ${totalRemaining(state,p.id)} servings</small></div><span class="draw-chance">1 in ${n}</span></div>`).join('');}
 function renderAdminContent(){const rows=state.profiles.map(p=>{const rem=totalRemaining(state,p.id), archived=p.archived;return `<article class="admin-row ${archived?'archived':''}"><img src="${image(p)}" alt=""><div><h3>${esc(p.name)}</h3><div class="meta">${esc(p.origin)} · ${rem} remaining · ${archived?'Archived':rem?'Active':'Finished'}</div><div class="admin-price">${adminPrice(p)}</div></div><div class="row-actions"><button class="secondary" data-edit="${p.id}">Edit</button><button class="secondary" data-replenish="${p.id}">Replenish</button><button class="secondary" data-adjust="${p.id}">Adjust</button><button class="${archived?'secondary':'danger'}" data-archive="${p.id}">${archived?'Restore':'Archive'}</button></div></article>`}).join('');const history=state.history.slice(0,30).map(e=>{const p=profile(e.profileId);return `<div class="history-item"><div><b>${e.type==='brew'?'Brewed 1 serving':e.type==='undo'?'Undid change':'Adjusted stock'}</b> · ${esc(p?.name||'Deleted coffee')} ${e.autoArchived?'· automatically archived ':''}${e.undone?'(undone)':''}<br><time>${new Date(e.at).toLocaleString()}</time></div>${e.type!=='undo'&&!e.undone?`<button class="secondary" data-undo="${e.id}">Undo</button>`:''}</div>`}).join('');app.innerHTML=`<header class="admin-head"><div><div class="eyebrow">Archive 404 · L13 - W105/W106</div><h1>Inventory</h1><p>Profiles are reusable. Replenishment creates a new stock batch and preserves history.</p></div><div class="toolbar"><a class="secondary" href="#menu">Back to menu</a><a class="secondary" href="#favourites">Favourites</a><button class="secondary" id="admin-signout">Sign out</button><button class="primary" id="add-profile">Add coffee</button><button class="secondary" id="export">Export backup</button><button class="secondary" id="import">Import backup</button></div></header>${state.profiles.filter(p=>p.onShelf&&!p.archived).length>2?'<p class="inventory-warning">More than two legacy shelf assignments are saved. No records have been moved; adjust the assignments here. Additional available beans remain accessible in the stock list.</p>':''}<div class="admin-list">${rows||'<div class="empty">No coffee profiles yet.</div>'}</div><section class="history"><div class="section-head"><h2>Recent history</h2></div>${history||'<div class="empty">Brew and adjustment events appear here.</div>'}</section>`;bindAdmin();guardAdminControls();document.querySelector('#admin-signout').onclick=async()=>{const pending=auth.logout();state=repo.withFavourites(stripPrivate(state));persistedState=structuredClone(state);render();await pending;};}
 function renderSignIn(message=''){
@@ -85,8 +88,8 @@ function guardAdminControls(){
 }
 setInterval(()=>{if(view==='admin'&&!auth.active()&&document.querySelector('.admin-list')){if(dialog.open)dialog.close();state=repo.withFavourites(stripPrivate(state));persistedState=structuredClone(state);renderSignIn('Your session expired. Please sign in again.');}},15000);
 
-function render(){if(view==='admin')renderAdmin();else if(view==='favourites')renderFavourites();else renderMenu();if(view==='surprise')openSurprise();}
-function go(next){view=next;location.hash=next;render();scrollTo({top:0,behavior:'smooth'});}
+function render(){if(view==='admin')renderAdmin();else if(view==='favourites'&&inventoryReady)renderFavourites();else renderMenu();if(view==='surprise'&&inventoryReady)openSurprise();}
+function go(next){view=next;location.hash=next;render();if(next!=='admin')void syncMenu();scrollTo({top:0,behavior:'smooth'});}
 
 function openProfile(id){const p=profile(id);if(!p)return;dialogBody.innerHTML=profileMarkup(state,p);if(!dialog.open)dialog.showModal();}
 let brewing=false;
@@ -108,18 +111,39 @@ async function undoChange(eventId,message='Change undone'){try{state=await repo.
 async function brew(id){
   if(brewing)return;const p=profile(id);if(!p||p.archived||totalRemaining(state,id)<1)return notify('No servings available');
   brewing=true;
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)preloadBrewArt();
   try{
     const confirmed=await confirmAction('Brew a cup',`Record one brewed serving of ${p.name}? This will deduct 1 serving from your inventory.${totalRemaining(state,id)===1?' This is the last serving, so the bean will move to archive.':''}`,'Confirm brew');
     if(!confirmed)return;
     state=await repo.brew(id);
     persistedState=structuredClone(state);
     if(dialog.open)dialog.close();if(surpriseDialog.open)surpriseDialog.close();
-    if(view==='surprise')view='menu';render();notify(`Brew recorded · ${p.name}${!profile(id)||profile(id).archived?' · moved to archive':''}`);
+    view='menu';history.replaceState(null,'','#menu');render();
+    const eventId=state.history[0].id;
+    const undoRequested=await showBrewCelebration({name:p.name,remaining:totalRemaining(state,id),archived:!profile(id)||profile(id).archived}).catch(()=>false);
+    if(undoRequested){await undoChange(eventId,'Serving restored');return;}
+    notify(`Brew recorded · ${p.name}${!profile(id)||profile(id).archived?' · moved to archive':''}`);
     const undo=document.createElement('button');undo.className='toast-undo';undo.textContent='Undo';
-    const eventId=state.history[0].id;undo.onclick=()=>undoChange(eventId,'Serving restored');toast.append(undo);
+    undo.onclick=()=>undoChange(eventId,'Serving restored');toast.append(undo);
   }catch(error){notify('Brew not recorded: '+error.message);}finally{brewing=false;}
 }
-function spin(){if(!draw.length)return;const wheel=document.querySelector('#wheel'),button=document.querySelector('#spin');button.disabled=true;button.setAttribute('aria-busy','true');const index=Math.floor(Math.random()*draw.length), chosen=draw[index];wheel.style.transform=`rotate(${1080+360-(index+.5)*360/draw.length}deg)`;spinTimer=setTimeout(()=>{if(!wheel.isConnected)return;document.querySelector('#draw-list').hidden=true;document.querySelector('.draw-panel > .eyebrow').hidden=true;document.querySelector('#result').innerHTML=`<div class="result-reveal"><div class="result-symbol">${wheelSymbol(index)}</div><div class="eyebrow">Your next cup</div><h2>${esc(chosen.name)}</h2><p>${esc(chosen.notes)}</p><button class="primary" id="result-brew">Brew 1 serving →</button><button class="text-button" data-profile="${chosen.id}">Coffee details ↗</button></div>`;document.querySelector('#result-brew').onclick=()=>brew(chosen.id);button.disabled=false;button.removeAttribute('aria-busy');button.setAttribute('aria-label','Spin again');button.onclick=()=>{renderSurprise();const next=document.querySelector('#spin');next.focus();next.disabled=true;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(surpriseDialog.open)spin();}));};},matchMedia('(prefers-reduced-motion: reduce)').matches?50:1500);}
+function spin(){
+  if(!draw.length)return;
+  const wheel=document.querySelector('#wheel'),button=document.querySelector('#spin');
+  const index=Math.floor(Math.random()*draw.length),chosen=draw[index];
+  button.disabled=true;button.setAttribute('aria-busy','true');
+  revealController?.abort();const controller=new AbortController();revealController=controller;
+  wheel.style.transform='rotate('+(1080+360-(index+.5)*360/draw.length)+'deg)';
+  spinTimer=setTimeout(async()=>{
+    if(!wheel.isConnected||!surpriseDialog.open||controller.signal.aborted)return;
+    document.querySelector('#draw-list').hidden=true;
+    document.querySelector('.draw-panel > .eyebrow').hidden=true;
+    document.querySelector('#result').innerHTML='<p class="mystery-message" role="status">A secret from the archive…</p>';
+    await playBeanReveal(wheel.closest('.wheel-stage'),{signal:controller.signal});
+    if(!wheel.isConnected||!surpriseDialog.open||controller.signal.aborted)return;
+    surpriseDialog.close();openProfile(chosen.id);
+  },matchMedia('(prefers-reduced-motion: reduce)').matches?50:1500);
+}
 
 function profileForm(existing={}){return `<h2>${existing.id?'Edit coffee':'Add coffee'}</h2><form id="profile-form"><label>Roaster (optional)<input name="roaster" value="${esc(existing.roaster||'')}"></label><label>Name<input name="name" required value="${esc(existing.name||'')}"></label><div class="two"><label>Origin<input name="origin" required value="${esc(existing.origin||'')}"></label><label>Producer / farm<input name="producer" value="${esc(existing.producer||'')}"></label></div><div class="two"><label>Process<input name="process" value="${esc(existing.process||'')}"></label><label>Roast level<input name="roastLevel" value="${esc(existing.roastLevel||'')}"></label></div><fieldset class="price-fields"><legend>Purchase price · admin only</legend><div class="two"><label>Price per 100 g<input type="number" min="0" step="0.01" name="pricePer100g" placeholder="e.g. 12.50" value="${esc(existing.pricePer100g??'')}"></label><label>Currency<select name="currency">${PRICE_CURRENCIES.map(c=>`<option value="${c}" ${(existing.currency||'$')===c?'selected':''}>${c==='$'?'$ (unspecified)':c}</option>`).join('')}</select></label></div><small>Visible only in Inventory. Leave blank if unknown.</small></fieldset><div class="two"><label>Country (optional)<input name="country" value="${esc(existing.country||'')}"></label><label>Region (optional)<input name="region" value="${esc(existing.region||'')}"></label></div><label>Variety (optional)<input name="variety" value="${esc(existing.variety||'')}"></label><label>Roast method<input name="roastMethod" value="${esc(existing.roastMethod||'')}"></label><label>Tasting notes<textarea name="notes">${esc(existing.notes||'')}</textarea></label><label>Image URL (optional)<input name="image" value="${existing.image===placeholder?'':esc(existing.image||'')}"></label><label>Brewing information (optional)<textarea name="brew">${esc(existing.brew||'')}</textarea></label><label><span><input style="width:auto" type="checkbox" name="onShelf" ${existing.onShelf?'checked':''}> On the shelf</span></label>${existing.id?'':`<div class="two"><label>Initial servings<input type="number" min="0" name="servings" required value="10"></label><label>Roast date<input type="date" name="roastDate"></label></div><label>Purchase date<input type="date" name="purchaseDate"></label>`}<button class="primary" type="submit">Save coffee</button></form>`;}
 function openProfileForm(id){const existing=id?profile(id):{};dialogBody.innerHTML=profileForm(existing);dialog.showModal();document.querySelector('#profile-form').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;if(!await requireAdmin())return;const d=Object.fromEntries(new FormData(form));let pricing;try{pricing=priceFields(d.pricePer100g,d.currency);assertShelfCapacity(state,{id,onShelf:d.onShelf==='on',archived:existing.archived||false});}catch(error){notify(error.message);return;}Object.assign(d,pricing);if(id)Object.assign(profile(id),{...d,onShelf:d.onShelf==='on',image:d.image||placeholder});else{const pid=uid('profile');state.profiles.push({id:pid,...d,onShelf:d.onShelf==='on',image:d.image||placeholder,archived:false});const servings=Math.max(0,Number(d.servings));state.batches.push({id:uid('batch'),profileId:pid,purchaseDate:d.purchaseDate,roastDate:d.roastDate,initialServings:servings,remainingServings:servings,archived:false});}dialog.close();await save('Coffee saved');};}
@@ -132,9 +156,9 @@ document.addEventListener('click',e=>{const v=e.target.closest('[data-view]')?.d
 document.querySelector('#open-surprise').onclick=openSurprise;
 installAdminHold(document.querySelector('.wordmark'),()=>{if(view==='menu')go('admin');},{delay:ADMIN_HOLD_MS});
 document.querySelector('#close-surprise').onclick=()=>surpriseDialog.close();
-surpriseDialog.addEventListener('close',()=>{clearTimeout(spinTimer);if(view==='surprise'){view='menu';history.replaceState(null,'','#menu');}});
-document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!await requireAdmin())return;try{showImportChoice(validateBackup(JSON.parse(await file.text())));}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{const route=adminRoute(location.hash);view=route.view;if(route.setupToken)setupToken=route.setupToken;render();});
-render();if(!repo.online)notify('Offline · browsing saved menu. Stock changes require a connection.');
+surpriseDialog.addEventListener('close',()=>{clearTimeout(spinTimer);revealController?.abort();if(view==='surprise'){view='menu';history.replaceState(null,'','#menu');}});
+document.querySelector('.dialog-close').onclick=()=>dialog.close();document.querySelector('#import-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!await requireAdmin())return;try{showImportChoice(validateBackup(JSON.parse(await file.text())));}catch(err){notify(err.message);}e.target.value='';};window.addEventListener('hashchange',()=>{const route=adminRoute(location.hash);view=route.view;if(route.setupToken)setupToken=route.setupToken;render();if(view!=='admin')void syncMenu();});
+render();
 
 function showLocalMigration(){
  const local=repo.localBackup();if(repo.initialized||!local?.profiles?.length)return;
@@ -145,12 +169,19 @@ function showLocalMigration(){
  const backup=document.createElement('button');backup.className='secondary';backup.textContent='Export saved local backup';backup.onclick=()=>{const blob=new Blob([JSON.stringify(local,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='archive404-preserved-local-backup.json';link.click();URL.revokeObjectURL(url);};
  box.append(text,publish,backup);app.prepend(box);
 }
-let syncing=false;
+let syncing=false,offlineNotified=false;
 async function syncMenu(){
  if(syncing||view==='admin'||dialog.open||surpriseDialog.open||actionDialog.open||document.hidden||brewing)return;
- syncing=true;try{const latest=await repo.load();if(JSON.stringify(latest)!==JSON.stringify(state)){state=latest;persistedState=structuredClone(state);render();}}finally{syncing=false;}
+ syncing=true;const before=persistedState;
+ try{
+   const latest=await repo.load({requireOnline:true});
+   if(before!==persistedState||brewing||view==='admin'||dialog.open||surpriseDialog.open||actionDialog.open)return;
+   const changed=!inventoryReady||JSON.stringify(latest)!==JSON.stringify(state);inventoryReady=true;startupError=false;offlineNotified=false;
+   if(changed){state=latest;persistedState=structuredClone(state);render();}
+ }catch{if(!inventoryReady){startupError=true;if(view==='menu')renderMenu();}else if(!offlineNotified){offlineNotified=true;notify('Offline · browsing saved menu. Stock changes require a connection.');}}finally{syncing=false;}
 }
 setInterval(syncMenu,10000);window.addEventListener('focus',syncMenu);window.addEventListener('online',syncMenu);document.addEventListener('visibilitychange',syncMenu);
+void syncMenu();
 
 function showImportChoice(backup){
  if(dialog.open)dialog.close();

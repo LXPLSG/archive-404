@@ -29,6 +29,28 @@ test('server rejects negative stock, duplicate profiles, orphan batches and thir
 test('two repositories see shared changes while favourites and legacy backups remain local',async()=>{const h=harness(),oneStore=memory(),twoStore=memory();oneStore.setItem('coffee-menu-pwa:v1',JSON.stringify(fixture()));const one=new SharedInventoryRepository({storage:oneStore,fetcher:h.fetcher}),two=new SharedInventoryRepository({storage:twoStore,fetcher:h.fetcher});let a=await one.load(),b=await two.load();assert.equal(a.profiles[0].favourite,true);assert.equal(b.profiles[0].favourite,false);await one.brew('p');b=await two.load();assert.equal(b.profiles.length,0);assert.deepEqual(one.localBackup(),fixture());assert(!oneStore.getItem('archive404:shared-public:v1').includes('pricePer100g'));});
 test('lost brew response retries use the same operation ID and never decrement twice',async()=>{let s=fixture();s.batches[0].initialServings=s.batches[0].remainingServings=2;const h=harness(s);let fail=true;const repo=new SharedInventoryRepository({storage:memory(),fetcher:async(...args)=>{const r=await h.fetcher(...args);if(JSON.parse(args[1].body).action==='brew'&&fail){fail=false;throw Error('Lost response');}return r;}});await repo.load();await assert.rejects(repo.brew('p'));await repo.brew('p');assert.equal(h.row().state.batches[0].remainingServings,1);});
 test('offline cached browsing excludes private prices; offline mutations fail rather than making local stock',async()=>{const h=harness(),store=memory(),repo=new SharedInventoryRepository({storage:store,fetcher:h.fetcher});repo.setAuth({accessToken:'admin'});await repo.load();repo.fetcher=async()=>{throw Error('offline')};const cached=await repo.load();assert.equal(cached.profiles[0].pricePer100g,undefined);await assert.rejects(repo.brew('p'));assert.equal(h.row().state.batches[0].remainingServings,1);});
+test('startup reads cached public inventory synchronously without fetching or exposing prices',async()=>{
+ const store=memory(),h=harness(),writer=new SharedInventoryRepository({storage:store,fetcher:h.fetcher});
+ writer.setAuth({accessToken:'admin'});await writer.load();let calls=0;
+ const reader=new SharedInventoryRepository({storage:store,fetcher:async()=>{calls++;return new Promise(()=>{});}});
+ const cached=reader.cached();assert.equal(calls,0);assert.equal(cached.profiles[0].name,'Actual bean');assert.equal(cached.profiles[0].pricePer100g,undefined);
+ store.setItem('archive404:favourites:v1','broken');assert.doesNotThrow(()=>reader.cached());
+ store.setItem('archive404:shared-public:v1','broken');assert.equal(reader.cached(),null);
+});
+test('a late read cannot roll back a newer revision or offline menu',async()=>{
+ const store=memory(),s=fixture();let finishRead;
+ const repo=new SharedInventoryRepository({storage:store,fetcher:async(url,options)=>{
+   if(JSON.parse(options.body).action==='read')return new Promise(resolve=>finishRead=resolve);
+   return Response.json({revision:2,initialized:true,state:{...s,profiles:[] ,batches:[]},result:{eventId:'event'}});
+ }});
+ const reading=repo.load();await repo.brew('p');finishRead(Response.json({revision:1,initialized:true,state:s}));await reading;
+ assert.equal(repo.revision,2);assert.equal(repo.cached().profiles.length,0);
+});
+test('a successful server mutation remains successful if browser cache is full',async()=>{
+ const h=harness(),store=memory(),repo=new SharedInventoryRepository({storage:store,fetcher:h.fetcher});
+ store.setItem=()=>{throw Error('Quota exceeded');};
+ const next=await repo.brew('p');assert.equal(next.profiles.length,0);assert.equal(h.row().state.history.length,1);
+});
 test('Edge Function and browser use exactly the same domain business rules',()=>{assert.equal(fs.readFileSync(new URL('../js/domain.js',import.meta.url),'utf8'),fs.readFileSync(new URL('../supabase/functions/archive404-inventory/domain.js',import.meta.url),'utf8'));});
 test('add import skips duplicate stock IDs, keeps existing balances and shelf, appends new batches and coffees',async()=>{const h=harness();const incoming=fixture();incoming.batches[0].remainingServings=0;incoming.profiles[0].name='Do not overwrite';incoming.profiles.push({id:'new',name:'New coffee',onShelf:true});incoming.batches.push({id:'new-b',profileId:'new',initialServings:8,remainingServings:8},{id:'replenish',profileId:'p',initialServings:4,remainingServings:4});const input={action:'import',mode:'add',state:incoming,revision:0,requestId:crypto.randomUUID()};let result=await(await h.request(input,'admin')).json();assert.equal(result.state.profiles[0].name,'Actual bean');assert.equal(result.state.batches[0].remainingServings,1);assert.equal(result.state.profiles[0].onShelf,true);assert.equal(result.state.profiles[1].onShelf,false);assert.equal(result.result.summary.batches,2);assert.equal((await h.request({...input,revision:1,requestId:crypto.randomUUID()},'admin')).status,200);assert.equal(h.row().state.batches.length,3);});
 test('replace import replaces records, requires admin and rejects unknown import mode',async()=>{const h=harness(),s=fixture();s.profiles[0].name='Replacement';const input={action:'import',mode:'replace',revision:0,state:s,requestId:crypto.randomUUID()};assert.equal((await h.request(input)).status,403);assert.equal((await h.request({...input,mode:'unknown'},'admin')).status,400);assert.equal((await h.request(input,'admin')).status,200);assert.equal(h.row().state.profiles[0].name,'Replacement');});

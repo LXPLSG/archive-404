@@ -1,87 +1,54 @@
 # Archive 404 · Coffee Menu PWA
 
-An editorial coffee menu and local inventory tracker. This release implements the approved two-card Archive 404 composition and the subsequent request to automatically archive a bean after its last serving is brewed.
+Release: archive404-mystery-20 · 6 November 2026. Dependency-free static frontend with shared inventory, private admin pricing, browser favourites and offline cached browsing. This release includes the glass-cup brewing sequence, startup cleanup and the approved packet-to-bean mystery reveal.
 
 ## Run and test
 
-Requires Node.js 18 or newer, with no package installation needed.
+Use Node.js 20 or newer. No package installation or build step is required.
 
 ```sh
 npm run serve
-```
-
-Open http://localhost:4173. To use another port, run `PORT=4174 npm run serve`. Keep using the same host and port as your existing collection: browser storage belongs to that origin. Opening a different port or switching between localhost and 127.0.0.1 creates a separate collection.
-
-```sh
 npm test
 ```
 
-Do not open index.html directly. Module loading and service workers require a web server.
+Open http://localhost:4173, or use `PORT=4174 npm run serve`. Do not open index.html directly. The backend permits local development on ports 4173/4174 and the existing GitHub Pages origin. Browser favourites and offline caches belong to each origin; inventory belongs to the shared backend.
 
-## Use the menu
+## Menu and brewing
 
-- The two shelf slots appear above Others in Stock. Tap a coffee name or stock label for its full details.
-- Tap a heart to toggle a favourite. The detail screen contains a link to Favourites. Management is accessed through the hidden title gesture.
-- The very faint two-bean icon at the upper right opens Surprise Me. Every available, non-archived bean has an equal chance, irrespective of shelf assignment or serving count. Drawing never consumes stock.
-- Brew a cup opens a confirmation. Confirming records exactly one serving from the oldest available batch. The action cannot consume an archived or depleted bean.
-- **Last serving:** when the total across all active batches reaches zero through a confirmed brew, the profile automatically moves to archive. Its batches and history remain saved. The confirmation and completion message explain this.
-- Undo restores the serving and reverses that automatic archive. If both shelf places have since been filled, it returns to Others in Stock and explains this in the completion message. An intentional later archive is respected.
-- Replenishing an automatically archived bean reactivates it. When its old shelf place is unavailable, it returns to stock. Manually archived profiles still require Restore.
+- Two shelf slots appear above Others in Stock. Tap coffee names or stock cards for details. Hearts appear in details only.
+- The faint two-bean header icon opens Surprise Me. Each draw includes up to two available shelf coffees and two random, distinct stock coffees. Each finalist has equal odds. Short groups show fewer choices. Tap the centre 404 control to spin. A paper packet unfolds to reveal a bean, then its selected coffee details open directly. Reopen Surprise Me for a fresh draw. Selection never consumes stock.
+- Brew a cup opens a confirmation. Only a successful confirmed server transaction deducts one serving from the oldest available batch and records history.
+- The transparent ink animation then plays for 5.6 seconds: beans, grinding, pour-over and a glass cup. Completion shows the coffee and remaining servings, with Back to menu and Undo brew. Skip animation and Escape are supported. Reduced motion shows static completion immediately.
+- The last confirmed serving automatically archives the bean, preserving batches/history. Undo restores the serving and reverses automatic archive. If both shelf spaces have since filled, restoration returns it to stock.
+- Replenishment reactivates automatically archived beans. Manually archived beans require Restore. Manual corrections to zero leave a finished record; they do not trigger automatic archive.
 
-Existing zero-serving records are not retrospectively archived. A manual stock correction to zero also remains a finished record; automatic archiving is triggered specifically by the last confirmed brew.
+## Admin, storage and backups
 
-## Inventory and backups
+Hold the landing-page Archive 404 wordmark for seven seconds, then sign in with the existing username/password. Keyboard users can focus the wordmark and press Alt+Enter. The gesture is a navigation shortcut; the backend independently checks authenticated admin membership. No public management link is shown.
 
-Press and hold the Archive 404 title for seven seconds, or append `#admin` to the app URL, to open admin sign-in. Bean details no longer include a Manage inventory link. The Inventory management link also becomes visible when reached by keyboard. The address L13 - W105/W106 remains on the secondary Inventory screen.
+Management supports reusable profiles, batches, initial/remaining servings, two shelf assignments, private prices per 100 g, replenishment, adjustments, archive/restore and history. Favourites belong to each browser/device. Prices and full history are admin-only.
 
-**Hidden landing-page access:** press and hold the Archive 404 title for seven seconds to open admin sign-in. A regular tap still returns home. Keyboard users can focus the title and press Alt+Enter, or use the Inventory management link. The gesture is a navigation shortcut; username/password authentication is a separate step.
+Admin sessions stay in page memory and expire after 15 idle minutes or token expiry. Reload requires sign-in. Passwords/tokens never enter inventory backups or browser persistence. Existing owner setup is unchanged. Username-only accounts have no email recovery; lost credentials require a controlled operator reset.
 
-**Admin account:** the owner receives a single-use setup link, valid for 24 hours, to choose a username and password (at least 12 characters). The link is not included in source code or backups. Usernames are 3–32 characters, starting with a letter; letters, numbers, dots, hyphens and underscores are supported. No email address is needed in the app. After setup, reopen admin and sign in with that username/password. There is no public registration or self-assignment of admin permissions.
+Export downloads the admin collection as JSON, including private prices/history. Keep backups private. Import offers:
 
-Authentication uses the deployed Supabase archive404-auth service, which validates the user and an explicit admin membership. Sessions stay in page memory, lock after 15 idle minutes or token expiry, and are lost on reload. Inventory access and management actions require an online verification. Use Sign out to lock the management screen. Passwords and session tokens are never written to inventory backups or local storage. Username-only accounts do not have email password recovery; contact the project owner for a controlled reset if the password is lost.
+- **Add records:** retain existing balances/history, skip matching IDs, append new records. New coffees start in Others in Stock.
+- **Replace all records:** explicit confirmation; replace shared inventory and retain a private pre-import restore point. Recovering that restore point currently requires the database operator.
 
-Create and edit reusable bean profiles, set initial servings, add replenishment batches, correct remaining counts, review history, and archive/restore profiles. At most two non-archived profiles may be assigned to the shelf. Legacy excess assignments are retained and flagged for correction; they are never silently overwritten or reassigned.
+Both modes update shared inventory for all visitors. Public snapshots exclude private fields. The original coffee-menu-pwa:v1 backup is retained; this release changes no storage keys or database schema.
 
-Price per 100 g and currency appear only in signed-in Inventory. They are omitted from the public menu, detail view and wheel. **Inventory storage remains local:** price information is still in this browser's storage and full backups, accessible to someone with control of that browser. This sign-in gate does not convert existing local data into an encrypted or authenticated cloud database.
+## Loading, installation and offline use
 
-Export backup downloads all profiles, batches and history as JSON, including favourites, prices and automatic archive metadata. Import replaces the current collection; export first if you need to retain it. The original `coffee-menu-pwa:v1` storage key and schema version remain unchanged. No data migration or reset is needed.
+Saved public inventory renders immediately, then refreshes. New visitors see a loading state until their first shared read. Read deadline: eight seconds. Writes retain their 20-second timeout and idempotent retry protection. A late read cannot roll back a newer mutation's cache revision. Full browser cache storage cannot turn an acknowledged write into a reported failure.
 
-## Install and offline use
+Versioned assets use the release cache immediately. Navigation tries the network for up to 2.5 seconds, then cached HTML. Offline shell: 24 entries, approximately 918 KB. Obsolete backgrounds are removed. Brewing artwork uses a 334 KB transparent atlas fetched when Brew is pressed; the mystery reveal uses a 466 KB atlas fetched when Surprise Me opens. Both use browser interpolation and stay out of initial loading. No external fonts/libraries load at startup.
 
-Serve over HTTPS, or localhost for development. Visit online first so the application files can be cached. Then use your browser's Install app / Add to Home Screen option; on iOS Safari use Share → Add to Home Screen. Exact installation UI depends on the browser. The existing SVG app icon is retained; native-device installation remains a release check.
+Serve on HTTPS or localhost. Visit online first, then use Install app / Add to Home Screen (Safari: Share → Add to Home Screen). PNG home-screen icons and manifest are retained. Offline browsing uses the saved public menu; mutations and admin verification require connectivity. External coffee images may be unavailable offline. Safari controls its native status/toolbar backgrounds.
 
-The service worker tries the network first and falls back to cached app files. It never clears local inventory. External coffee image URLs may not be available offline. No additional fonts or libraries are downloaded at startup.
+## Deployment and updates
 
-## Update an existing installation
+Publish index.html, styles.css, manifest.webmanifest, sw.js, js/ and assets/ to the existing HTTPS origin/path. No build command. GitHub Pages hosts static files; the existing shared backend stays authoritative. See supabase/SETUP.md for backend operations; this frontend release needs no backend deployment.
 
-Export a backup, replace the app files **on the same origin and path**, then open online and reload to obtain release `archive404-approved-2`. Do not clear site data. The worker removes obsolete app-file caches only, leaving inventory storage intact. If startup fails, the app displays a retry panel instead of a blank screen.
+Keep the same origin/path; do not clear site data. Reload online to receive the release. The worker removes only old app caches, leaving inventory/favourites/legacy backups intact. Never publish owner backup JSON, privileged credentials or temporary QA servers. Browser configuration contains public credentials only.
 
-## Hosting
-
-The active app is a static site. Publish index.html, styles.css, manifest.webmanifest, sw.js, and the js/ and assets/ directories to an HTTPS static host, keeping their relative paths. There is no build command. You may deploy the full project as well, but the tests and backend drafts are not needed by the static site.
-
-**Shared inventory sync remains pending:** this release uses per-browser local storage, with Supabase username/password authentication for the management screen. It does not upload or synchronize inventory. Before using a shared stock ledger, connect the repository to the protected database and validate private pricing and the initial data transfer. The active authentication service source is supabase/functions/archive404-auth/index.js; the downloadable package also preserves prior backend migrations and drafts. Never put a privileged key in browser code.
-
-The asynchronous repository interface in js/storage.js remains the integration boundary for a future authenticated backend. A deployment alone does not transfer the collection between browser origins or devices; export/import is the current transfer mechanism.
-
-See CHANGELOG.md and QA-REPORT.md for this release's changes, verified checks and limits.
-# Shared inventory release · 5 November 2026
-
-Latest visual release: archive404-higgs-17 uses Higgsfield-generated page/card materials and wheel emblems, a centre-tap spin control and an animated result reveal. The wheel draws from two shelf coffees and two randomly sampled stock coffees, with equal odds among the finalists. See assets/TEXTURE-NOTES.md for asset provenance and prompts.
-
-Wheel update (archive404-wheel-15): open Surprise Me and tap the centre 404 circle to spin. Each draw uses the two available shelf coffees plus two random, distinct coffees from Others in Stock, with equal odds within that draw. Tap the centre again after a result to sample a fresh stock pair and spin again. If either group has fewer than two available coffees, fewer choices are shown. The separate Brew action is still required to consume stock.
-
-The hosted app now uses Supabase shared inventory through the `archive404-inventory` Edge Function. GitHub Pages serves the app files; it is not the inventory database. Favourites remain private to each browser/device. Menus refresh on opening/focus and approximately every 10 seconds while visible; refresh immediately to force a new read.
-
-Admin access remains a seven-second hold on the landing-page wordmark followed by username/password sign-in. Import backup now offers **Add records** (keep existing profiles, balances and history; skip matching IDs; put new coffees in Others in Stock) and **Replace all records** (explicit confirmation; previous shared collection retained as a private restore point). Both publish changes for everyone. Exports from Inventory contain the full admin collection, including private prices and history; keep those files private.
-
-The owner-provided `coffee-menu-updated-2026-11-04.json` was loaded into shared storage: 15 profiles, 15 batches, 85 remaining servings. The backup has no shelf assignments; none were invented. The data file itself is not part of the source repository or downloadable project.
-
-Original `coffee-menu-pwa:v1` local data is retained without overwriting it. Public offline browsing uses a separate cache with no private prices/history. Brewing, imports and management changes require a connection; failed network requests are not queued as local stock changes. Request IDs make a retried brew idempotent. A guest can undo its own recent brew using a private, unpredictable request capability. Admins can review the full history and undo eligible events.
-
-Deployment details: deploy the two migration files dated 20261105, then the Edge Function (with `verify_jwt = true`) and its adjacent `domain.js`, and finally the static files. Only public publishable/visitor credentials are in browser source; service credentials remain server environment variables. The existing normalized tables remain untouched and empty. The active collection uses the backward-compatible v1 JSON model in `coffee_private.shared_inventory`, with a revision compare-and-swap transaction and private request/restore-point tables. This avoids dropping legacy fields during migration. Raw database RPCs and tables are service-role-only; the gateway validates admin membership and returns a public field allowlist to guests.
-
-Restoring an import restore point is currently an administrator/operator database operation; there is no self-service restore-point browser UI. Guest favourites do not sync across devices. Physical iOS installation and a real-owner sign-in after this release still require device verification; no owner password was entered or changed during implementation.
-
-Earlier local-first notes below describe previous releases and are superseded by this section.
-
+See QA-REPORT.md, CHANGELOG.md and assets/TEXTURE-NOTES.md. Physical iPhone installation and real-device timing remain manual checks. Local timing is not a guarantee of mobile network performance.

@@ -7,4 +7,4 @@ export class LocalStorageRepository {
   async clear() { this.storage.removeItem(KEY); }
 }
 
-export {SharedInventoryRepository,createRepository} from './shared-storage.js?v=archive404-shared-14';
+export {SharedInventoryRepository,createRepository} from './shared-storage.js?v=archive404-mystery-20';

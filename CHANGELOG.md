@@ -1,3 +1,23 @@
+# Release · archive404-mystery-20 · 6 November 2026
+
+- Approved Higgsfield packet-to-bean mystery reveal, followed directly by coffee details with favourite and Brew actions.
+- Glass-cup brewing animation/completion and Undo, retained from the approved review build.
+- Cached startup, cache-first versioned assets, bounded navigation/read delays, complete offline import closure, late-read protection and on-demand animation assets.
+- Cleaned superseded material files/styles, redundant result UI and contradictory documentation. No inventory, auth, database or storage-key reset.
+- 71 automated checks passed; browser workflow verification used disposable local inventory.
+
+# Wheel reveal · archive404-reveal-19 · 6 November 2026
+
+Enhanced the existing Higgsfield emblem reveal: one-second ink strokes, soft expanding ring, coffee name after 0.85 seconds, actions after 1.45 seconds. The winning wheel emblem remains prominent while others dim. No extra media downloads, inventory changes or selection-rule changes. Reduced-motion override retained. Local review only; not published.
+
+# Brew preview and performance cleanup · archive404-brew-18 · 6 November 2026
+
+- Original brewing sequence with only the cup changed to glass; transparent 5.6-second playback, skip/reduced motion and completion with Undo.
+- Cached public inventory renders before refresh; shorter read deadline and stale-read protection.
+- Cache-first static assets, bounded navigation wait, retired 4.5 MB of obsolete materials, on-demand 334 KB animation.
+- Removed unused imports/CSS/assets and stale documentation; existing auth, inventory, favourites and storage keys retained.
+- Local review only; not published. 66 tests pass.
+
 # Archive 404 · Approved UI release
 
 Higgsfield materials and reveal · archive404-higgs-17 · 5 November 2026: generated coordinated snow-white crystalline, ivory washi and lighter graphite/gold materials with Higgsfield, plus four original vector wheel emblems. Added a reduced-motion-aware animated result reveal. Wheel uses the two shelf coffees and two random stock coffees; centre tapping spins and re-spins. The compact phone layout shows all four finalists before the result replaces the list. Inventory, authentication and import logic are unchanged.

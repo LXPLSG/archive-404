@@ -10,17 +10,30 @@ export class SharedInventoryRepository{
  }
  setAuth(auth){this.auth=auth;}
  localBackup(){try{return JSON.parse(this.storage.getItem(LEGACY))||null;}catch{return null;}}
- withFavourites(state){const ids=new Set(JSON.parse(this.storage.getItem(FAVOURITES)||'[]'));return {...state,profiles:state.profiles.map(p=>({...p,favourite:ids.has(p.id)}))};}
+ withFavourites(state){let saved;try{saved=JSON.parse(this.storage.getItem(FAVOURITES)||'[]');}catch{}const ids=new Set(Array.isArray(saved)?saved:[]);return {...state,profiles:state.profiles.map(p=>({...p,favourite:ids.has(p.id)}))};}
  saveFavourites(state){this.storage.setItem(FAVOURITES,JSON.stringify(state.profiles.filter(p=>p.favourite).map(p=>p.id)));}
+ // Startup can paint the last public menu without waiting for a network round trip.
+ cached(){
+   try{
+     const cached=JSON.parse(this.storage.getItem(CACHE));
+     if(!Array.isArray(cached?.state?.profiles)||!Array.isArray(cached?.state?.batches))return null;
+     this.revision=Math.max(this.revision,Number(cached.revision)||0);this.initialized=cached.initialized;
+     return this.withFavourites(stripPrivate(cached.state));
+   }catch{return null;}
+ }
  async request(input){
-   let r;try{r=await this.fetcher(INVENTORY_URL,{method:'POST',cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json',apikey:PUBLIC_KEY,Authorization:'Bearer '+(this.auth?.accessToken||VISITOR_TOKEN)},body:JSON.stringify(input)});}catch{this.online=false;throw Error('Connect to the internet to update shared inventory. Retry to check whether the change completed.');}
+   let r;try{r=await this.fetcher(INVENTORY_URL,{method:'POST',cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(input.action==='read'?8000:20000),headers:{'Content-Type':'application/json',apikey:PUBLIC_KEY,Authorization:'Bearer '+(this.auth?.accessToken||VISITOR_TOKEN)},body:JSON.stringify(input)});}catch{this.online=false;throw Error('Connect to the internet to update shared inventory. Retry to check whether the change completed.');}
    const data=await r.json();if(!r.ok){const e=Error(data.error||'Shared inventory is unavailable');e.status=r.status;throw e;}
-   this.online=true;this.revision=data.revision;this.initialized=data.initialized;
-   this.storage.setItem(CACHE,JSON.stringify({...data,state:stripPrivate(data.state),admin:false}));
+   this.online=true;
+   // A slower read must not replace a newer mutation's revision or offline snapshot.
+   if(data.revision>=this.revision){
+     this.revision=data.revision;this.initialized=data.initialized;
+     try{this.storage.setItem(CACHE,JSON.stringify({...data,state:stripPrivate(data.state),admin:false}));}catch{/* The server commit remains successful if browser storage is full. */}
+   }
    return data;
  }
  async load({requireOnline=false}={}){
-   try{return this.withFavourites((await this.request({action:'read'})).state);}catch(e){if(requireOnline)throw e;this.online=false;let cached;try{cached=JSON.parse(this.storage.getItem(CACHE));}catch{}return this.withFavourites(cached?.state||emptyInventory());}
+   try{return this.withFavourites((await this.request({action:'read'})).state);}catch(e){if(requireOnline)throw e;this.online=false;return this.cached()||this.withFavourites(emptyInventory());}
  }
  async mutation(key,input){
    const signature=JSON.stringify(input);let pending=this.pending.get(key);
