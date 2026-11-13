@@ -54,3 +54,36 @@ test('a successful server mutation remains successful if browser cache is full',
 test('Edge Function and browser use exactly the same domain business rules',()=>{assert.equal(fs.readFileSync(new URL('../js/domain.js',import.meta.url),'utf8'),fs.readFileSync(new URL('../supabase/functions/archive404-inventory/domain.js',import.meta.url),'utf8'));});
 test('add import skips duplicate stock IDs, keeps existing balances and shelf, appends new batches and coffees',async()=>{const h=harness();const incoming=fixture();incoming.batches[0].remainingServings=0;incoming.profiles[0].name='Do not overwrite';incoming.profiles.push({id:'new',name:'New coffee',onShelf:true});incoming.batches.push({id:'new-b',profileId:'new',initialServings:8,remainingServings:8},{id:'replenish',profileId:'p',initialServings:4,remainingServings:4});const input={action:'import',mode:'add',state:incoming,revision:0,requestId:crypto.randomUUID()};let result=await(await h.request(input,'admin')).json();assert.equal(result.state.profiles[0].name,'Actual bean');assert.equal(result.state.batches[0].remainingServings,1);assert.equal(result.state.profiles[0].onShelf,true);assert.equal(result.state.profiles[1].onShelf,false);assert.equal(result.result.summary.batches,2);assert.equal((await h.request({...input,revision:1,requestId:crypto.randomUUID()},'admin')).status,200);assert.equal(h.row().state.batches.length,3);});
 test('replace import replaces records, requires admin and rejects unknown import mode',async()=>{const h=harness(),s=fixture();s.profiles[0].name='Replacement';const input={action:'import',mode:'replace',revision:0,state:s,requestId:crypto.randomUUID()};assert.equal((await h.request(input)).status,403);assert.equal((await h.request({...input,mode:'unknown'},'admin')).status,400);assert.equal((await h.request(input,'admin')).status,200);assert.equal(h.row().state.profiles[0].name,'Replacement');});
+
+test('shelf swaps persist through admin save, guest reads, and offline rendering', async () => {
+  const {placeOnShelf} = await import('../js/domain.js');
+  const {menuMarkup} = await import('../js/presentation.js');
+  const state = fixture();
+  state.profiles.push({id:'q', name:'Second bean', onShelf:true});
+  state.batches.push({id:'b2', profileId:'q', initialServings:2, remainingServings:2});
+  const server = harness(state);
+  const admin = new SharedInventoryRepository({storage:memory(), fetcher:server.fetcher});
+  admin.setAuth({accessToken:'admin'});
+  const inventory = await admin.load();
+  placeOnShelf(inventory, inventory.profiles[0], 'right');
+  await admin.save(inventory);
+  const guest = new SharedInventoryRepository({storage:memory(), fetcher:server.fetcher});
+  const publicInventory = await guest.load();
+  assert.deepEqual(publicInventory.profiles.map(p => p.shelfPosition), ['right','left']);
+  assert.deepEqual(guest.cached().profiles.map(p => p.shelfPosition), ['right','left']);
+  const menu = menuMarkup(guest.cached());
+  assert.match(menu, /shelf-card ivory" data-coffee-id="q"/);
+  assert.match(menu, /shelf-card charcoal" data-coffee-id="p"/);
+  assert.equal(publicInventory.batches[0].remainingServings, 1);
+  await guest.brew('p');
+  const afterBrew = menuMarkup(await guest.load());
+  assert.match(afterBrew, /shelf-card ivory" data-coffee-id="q"/);
+  assert.match(afterBrew, /shelf-card empty-slot charcoal/);
+});
+
+test('duplicate explicit shelf slots are rejected even for imports', () => {
+  const state = fixture();
+  state.profiles[0].shelfPosition = 'right';
+  state.profiles.push({id:'q', name:'Second bean', onShelf:true, shelfPosition:'right'});
+  assert.throws(() => validateInventory(state), /Each shelf position/);
+});

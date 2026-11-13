@@ -1,4 +1,4 @@
-import { availableProfiles, totalRemaining } from './domain.js?v=archive404-higgs-17';
+import { availableProfiles, totalRemaining, shelfSlots } from './domain.js?v=archive404-shelf-21';
 
 export const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const beanIcon='<svg viewBox="0 0 28 28" aria-hidden="true"><ellipse cx="14" cy="14" rx="9" ry="11" transform="rotate(36 14 14)"/><path d="M8 22c1-8 10-8 12-17"/></svg>';
@@ -21,10 +21,10 @@ export function shelfCard(state,p,index){
 }
 export function stockCard(state,p,index=0){return `<button class="stock-card accent-${index%2}" data-profile="${esc(p.id)}" aria-label="View ${esc(p.name)} details"><span class="stock-identity"><span class="coffee-origin">${esc(p.country||p.origin||'')}</span><span class="stock-name">${esc(p.name)}</span><span class="stock-notes">${esc(preview(p.notes,100))}</span></span><span class="stock-technical"><span>${esc(p.process||'')}</span><span>${esc(p.roastLevel||'')}</span></span><span class="stock-servings">${beanIcon}<strong>${totalRemaining(state,p.id)}</strong><span class="sr-only">servings left</span></span><span class="stock-arrow" aria-hidden="true">›</span></button>`;}
 export function menuMarkup(state){
-  const available=availableProfiles(state),shelf=available.filter(p=>p.onShelf),reserve=available.filter(p=>!p.onShelf);
-  // Legacy excess assignments remain saved and accessible; never silently move records.
-  const overflow=shelf.slice(2);
-  return `<section class="menu-section" aria-labelledby="shelf-title"><h2 id="shelf-title">On the Shelf</h2><div class="shelf-grid">${[0,1].map(i=>shelfCard(state,shelf[i],i)).join('')}</div></section><section class="menu-section stock-section" aria-labelledby="stock-title"><h2 id="stock-title">Others in Stock</h2><div class="stock-list">${[...reserve,...overflow].map((p,i)=>stockCard(state,p,i)).join('')||'<p class="empty-stock">The reserve is quiet for now.</p>'}</div></section>`;
+  const available = availableProfiles(state);
+  const shelf = Object.values(shelfSlots(state)).map(coffee => available.includes(coffee) ? coffee : null);
+  const reserve = available.filter(coffee => !shelf.includes(coffee));
+  return `<section class="menu-section" aria-labelledby="shelf-title"><h2 id="shelf-title">On the Shelf</h2><div class="shelf-grid">${[0,1].map(i=>shelfCard(state,shelf[i],i)).join('')}</div></section><section class="menu-section stock-section" aria-labelledby="stock-title"><h2 id="stock-title">Others in Stock</h2><div class="stock-list">${reserve.map((p,i)=>stockCard(state,p,i)).join('')||'<p class="empty-stock">The reserve is quiet for now.</p>'}</div></section>`;
 }
 export function profileMarkup(state,p){
   const batches=state.batches.filter(b=>b.profileId===p.id),active=batches.filter(b=>!b.archived),remaining=totalRemaining(state,p.id);

@@ -21,6 +21,63 @@ export function assertShelfCapacity(state, candidate) {
   if(others.length>=2)throw new Error('Only two coffees fit on the shelf. Move one to Others in Stock first.');
 }
 
+export const shelfPositions = ['left', 'right'];
+
+export function shelfSlots(state) {
+  const slots = {left: null, right: null};
+  const shelf = state.profiles.filter(p => p.onShelf && !p.archived);
+  for (const coffee of shelf) {
+    if (shelfPositions.includes(coffee.shelfPosition) && !slots[coffee.shelfPosition]) {
+      slots[coffee.shelfPosition] = coffee;
+    }
+  }
+  // Older profiles have no explicit position. Keep their existing menu order.
+  const legacy = shelf.filter(p => !Object.values(slots).includes(p));
+  const ordered = [
+    ...legacy.filter(p => totalRemaining(state, p.id) > 0),
+    ...legacy.filter(p => totalRemaining(state, p.id) === 0)
+  ];
+  for (const position of shelfPositions) {
+    if (!slots[position]) slots[position] = ordered.shift() || null;
+  }
+  return slots;
+}
+
+export function placeOnShelf(state, coffee, position) {
+  if (position && !shelfPositions.includes(position)) throw Error('Choose a shelf position.');
+  assertShelfCapacity(state, {...coffee, onShelf: !!position});
+
+  const slots = shelfSlots(state);
+  if (!coffee.archived) {
+    for (const side of shelfPositions) {
+      const occupant = slots[side];
+      if (occupant && occupant.id !== coffee.id) {
+        occupant.shelfPosition = side;
+      }
+    }
+    const occupant = slots[position];
+    if (occupant && occupant.id !== coffee.id) {
+      occupant.shelfPosition = position === 'left' ? 'right' : 'left';
+    }
+  }
+  coffee.onShelf = !!position;
+  if (position) coffee.shelfPosition = position;
+  else delete coffee.shelfPosition;
+}
+
+export function restoreShelfPosition(state, coffee) {
+  if (!coffee.onShelf) return;
+  const slots = shelfSlots(state);
+  const preferred = coffee.shelfPosition;
+  const free = shelfPositions.find(side => !slots[side]);
+  const position = shelfPositions.includes(preferred) && !slots[preferred] ? preferred : free;
+  if (position) coffee.shelfPosition = position;
+  else {
+    coffee.onShelf = false;
+    delete coffee.shelfPosition;
+  }
+}
+
 export function totalRemaining(state, profileId) {
   return state.batches.filter(b => b.profileId === profileId && !b.archived).reduce((sum, b) => sum + Math.max(0, Number(b.remainingServings) || 0), 0);
 }
@@ -72,12 +129,11 @@ export function undoEvent(state, eventId, at = now()) {
   let restoredToStock=false;
   const coffee=next.profiles.find(p=>p.id===event.profileId);
   if(event.autoArchived&&coffee?.autoArchivedBy===event.id){
+    const wasOnShelf = coffee.onShelf;
+    restoreShelfPosition(next, coffee);
     coffee.archived=false;
     delete coffee.autoArchivedBy;
-    if(coffee.onShelf&&next.profiles.filter(p=>p.id!==coffee.id&&p.onShelf&&!p.archived).length>=2){
-      coffee.onShelf=false;
-      restoredToStock=true;
-    }
+    restoredToStock = !!wasOnShelf && !coffee.onShelf;
   }
   event.undone = true;
   event.undoneAt = at;
@@ -87,8 +143,8 @@ export function undoEvent(state, eventId, at = now()) {
 
 export function surpriseCandidates(state, random = Math.random) {
   const available=availableProfiles(state);
-  const shelf=available.filter(p=>p.onShelf).slice(0,2);
-  const stock=available.filter(p=>!p.onShelf);
+  const shelf=Object.values(shelfSlots(state)).filter(p=>available.includes(p));
+  const stock=available.filter(p=>!shelf.includes(p));
   // Partial Fisher–Yates: two distinct stock coffees, uniformly sampled.
   for(let i=0;stock.length>2&&i<2;i++){
     const j=i+Math.min(stock.length-i-1,Math.floor(random()*(stock.length-i)));
@@ -112,7 +168,7 @@ export function validateBackup(data) {
 export function addBackupRecords(current,incoming){
  const next=structuredClone(current),profiles=new Set(next.profiles.map(p=>p.id)),batches=new Map(next.batches.map(b=>[b.id,b])),events=new Set(next.history.map(e=>e.id)),addedBatches=new Set();
  const summary={profiles:0,batches:0,events:0,skipped:0};
- for(const p of incoming.profiles){if(profiles.has(p.id)){summary.skipped++;continue;}next.profiles.push({...p,onShelf:false});profiles.add(p.id);summary.profiles++;}
+ for(const p of incoming.profiles){if(profiles.has(p.id)){summary.skipped++;continue;}const added={...p,onShelf:false};delete added.shelfPosition;next.profiles.push(added);profiles.add(p.id);summary.profiles++;}
  for(const b of incoming.batches){if(batches.has(b.id)){if(batches.get(b.id).profileId!==b.profileId)throw Error('A batch ID belongs to a different coffee');summary.skipped++;continue;}if(!profiles.has(b.profileId))throw Error('Batch coffee is missing');next.batches.push(structuredClone(b));batches.set(b.id,b);addedBatches.add(b.id);summary.batches++;}
  for(const e of incoming.history){if(events.has(e.id)||!addedBatches.has(e.batchId)){summary.skipped++;continue;}next.history.push(structuredClone(e));events.add(e.id);summary.events++;}
  next.history.sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));

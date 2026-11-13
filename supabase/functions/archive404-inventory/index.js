@@ -1,17 +1,26 @@
-import {brewOne,undoEvent,validateBackup,addBackupRecords} from './domain.js';
+import {brewOne,undoEvent,validateBackup,addBackupRecords,shelfPositions} from './domain.js';
 
 export function validateInventory(input){
  const s=validateBackup(input),ids=new Set(),bids=new Set(),events=new Set();
  if(s.profiles.length>2000||s.batches.length>10000||s.history.length>50000)throw Error('Collection is too large');
  for(const p of s.profiles){if(typeof p.id!=='string'||!p.id||ids.has(p.id)||typeof p.name!=='string'||!p.name.trim())throw Error('Invalid or duplicate coffee');ids.add(p.id);delete p.favourite;}
  if(s.profiles.filter(p=>p.onShelf&&!p.archived).length>2)throw Error('Only two coffees fit on the shelf');
+ const assigned = new Set();
+ for (const coffee of s.profiles) {
+   const position = coffee.shelfPosition;
+   if (position === undefined) continue;
+   if (!coffee.onShelf || !shelfPositions.includes(position)) throw Error('Invalid shelf position');
+   if (coffee.archived) continue;
+   if (assigned.has(position)) throw Error('Each shelf position can hold one coffee');
+   assigned.add(position);
+ }
  for(const b of s.batches){if(!ids.has(b.profileId)||typeof b.id!=='string'||bids.has(b.id)||!Number.isSafeInteger(b.remainingServings)||!Number.isSafeInteger(b.initialServings)||b.remainingServings<0||b.initialServings<b.remainingServings)throw Error('Invalid stock batch');bids.add(b.id);}
  for(const e of s.history){if(typeof e.id!=='string'||events.has(e.id)||!ids.has(e.profileId)||!bids.has(e.batchId)||!['brew','adjustment','undo'].includes(e.type)||!Number.isSafeInteger(e.delta))throw Error('Invalid consumption history');events.add(e.id);}
  return {schemaVersion:1,profiles:s.profiles,batches:s.batches,history:s.history};
 }
 export function publicState(s){
  // Explicit allowlist: private prices and future admin-only fields never leak.
- const fields=['id','name','roaster','origin','country','region','producer','variety','process','roastLevel','roastMethod','notes','image','brew','onShelf','archived'];
+ const fields=['id','name','roaster','origin','country','region','producer','variety','process','roastLevel','roastMethod','notes','image','brew','onShelf','shelfPosition','archived'];
  const profiles=s.profiles.filter(p=>!p.archived).map(p=>({...Object.fromEntries(fields.filter(k=>k in p).map(k=>[k,p[k]])),recordedBrews:s.history.filter(e=>e.profileId===p.id&&e.type==='brew'&&!e.undone).length}));
  const ids=new Set(profiles.map(p=>p.id));
  return {schemaVersion:1,profiles,batches:s.batches.filter(b=>ids.has(b.profileId)&&!b.archived).map(b=>Object.fromEntries(['id','profileId','purchaseDate','roastDate','initialServings','remainingServings','archived'].filter(k=>k in b).map(k=>[k,b[k]]))),history:[]};
